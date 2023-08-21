@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="realsense_cam" type="pcl_process" name="pcl_process" output="screen">
+        <param name="pcl_test_dir_name" type="string" value="$(find realsense_cam)/data/pcds/test_run1/"/>
+    </node>
+</launch>

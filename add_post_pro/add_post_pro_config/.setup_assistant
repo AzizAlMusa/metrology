@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: add_post_pro_robot
+    relative_path: urdf/multisensor_robot.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/multisensor_vs6577.srdf
+  CONFIG:
+    author_name: Tomasz Swierzewski
+    author_email: tswierze@andrew.cmu.edu
+    generated_timestamp: 1595533065

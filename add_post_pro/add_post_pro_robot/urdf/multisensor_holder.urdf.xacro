@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<!-- DONE -->
+	<xacro:property name="M_PI" value="3.1415926535897931" />
+
+	<link name="EEF_tool_mount">
+		<visual>
+			<origin rpy="0.000000 0 0" xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="package://add_post_pro_robot/meshes/tool_mount.stl" scale=".001 .001 .001"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin rpy="0.000000 0 0" xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="package://add_post_pro_robot/meshes/tool_mount.stl" scale=".001 .001 .001"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="1"/>
+			<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.000000"/>
+			<inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+		</inertial>
+    </link>
+
+	<link name="EEF_sensor_holder">
+		<visual>
+			<origin rpy="0 0 0" xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="package://add_post_pro_robot/meshes/better_holder.stl" scale=".001 .001 .001"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="package://add_post_pro_robot/meshes/better_holder.stl" scale=".001 .001 .001"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="1"/>
+			<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.000000"/>
+			<inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+		</inertial>
+	</link>
+
+	<link name="EEF_scanner"/>
+	<link name="EEF_depstech_camera"/>
+
+    
+	<joint name="end_effector_mount" type="fixed">
+		<parent link="J6"/>
+		<child link="EEF_tool_mount"/>
+		<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.000000"/>
+	</joint>
+
+
+	<joint name="end_effector_magnet" type="fixed">
+		<parent link="J6"/>
+		<child link="EEF_sensor_holder"/>
+		<origin rpy="0.000000 0.000000 ${M_PI}" xyz="0.000000 0.000000 0.000000"/>
+	</joint>
+
+    <joint name="end_effector_scanner_holder" type="fixed">
+    	<parent link="EEF_sensor_holder"/>
+		<child link="EEF_scanner"/>
+		<origin rpy="0.000000 ${M_PI} ${M_PI/2}" xyz="0.000000 0.091600 0.005500"/>
+	</joint>
+	
+	<joint name="end_effector_depstech_holder" type="fixed">
+		<parent link="EEF_sensor_holder"/>
+		<child link="EEF_depstech_camera"/>
+		<origin rpy="${M_PI/8} ${-M_PI/4} ${-M_PI/3.95}" xyz="-0.042000 0.0353000 0.19000"/>
+	</joint>
+	
+	<xacro:include filename="$(find add_post_pro_robot)/urdf/D415.xacro"/>
+
+    <!-- Create camera instance -->
+    <realsense-D415 prefix="" parent="EEF_sensor_holder">
+		<origin xyz=".075 0.001 .031" rpy="0 ${-4*M_PI/8} ${M_PI}"/>
+    </realsense-D415>
+
+	<xacro:include filename="$(find add_post_pro_robot)/urdf/scancontrol.xacro"/>
+	<scancontrol2900-100 parent="EEF_scanner"/>
+
+	<xacro:include filename="$(find add_post_pro_robot)/urdf/depstech_camera.urdf.xacro"/>
+	<depstech_camera parent="EEF_depstech_camera"/>
+	<gazebo reference="EEF_sensor_holder">
+        <material>Gazebo/CoM</material>
+    </gazebo>
+	<gazebo reference="D415_camera">
+        <material>Gazebo/CoM</material>
+    </gazebo>
+</robot>

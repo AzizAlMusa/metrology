@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>__**Depowdering Bringup**__</title>
+        <style>
+</style>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.css" integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+        <link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        
+        <script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+        
+    </head>
+    <body class="vscode-light">
+        <h1 id="depowdering-bringup"><strong><strong>Depowdering Bringup</strong></strong></h1>
+<h2 id="directories">Directories</h2>
+<h3 id="dycalibresult">DyCalibResult</h3>
+<p>Results of D415 calibration. Probably going to be removed.</p>
+<h3 id="gazebo_models">gazebo_models</h3>
+<p>Stores Gazebo models (SDF and meshes) for the environment around the robot arm.</p>
+<h3 id="launch">launch</h3>
+<p>Contains the launch files needed to load up various parts of the project.</p>
+<h3 id="rviz">rviz</h3>
+<p>Stores Rviz configuration files that can be loaded up to open submenus on launch.</p>
+<h3 id="src">src</h3>
+<p>Programs to load parts of the environment or attach end effectors to the robot arm. These load them in as
+MoveIt collision objects to aide in collision detection. These programs will NOT load models into Gazebo.</p>
+<h3 id="urdf">urdf</h3>
+<p>Meshes and URDFs (in xacro format) for the depowdering environment.</p>
+<h3 id="world">world</h3>
+<p>Stores the gazebo environment(s) that are loaded up in simulation mode.</p>
+<h2 id="user-guide">User Guide:</h2>
+<h1 id="please-add-the-following-to-your-bashrc-file-located-in-your-home-directory-bashrc">Please add the following to your .bashrc file located in your home directory (&quot;~/.bashrc&quot;):</h1>
+<p><code>source $PATH_TO_DEPOWDERING/devel/setup.bash</code>
+Replace '$PATH_TO_DEPOWDERING' with the path to your install directory for the depowdering project.</p>
+<ul>
+<li>
+<h3 id="to-start-the-simulation">To start the simulation:</h3>
+<ul>
+<li>
+<p>Enter <p><code>roslaunch depowdering_bringup depowdering_bringup.launch</code></p> into the terminal to begin the simulation with only a realsense camera attached.</p></p>
+</li>
+<li>
+<p>To use a different sensor package, enter the following: `roslaunch depowdering_bringup depowdering_bringup.launch sensor:=$SENSOR`. Relace $SENSOR with either 'realsense', 'scancontrol', or 'multisensor'
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="to-start-the-live-robot">To start the live robot:</h3>
+<pre><code>- Enter `roslaunch depowdering_bringup depowdering bringup.launch sim:=false`
+Add the sensor:=$SENSOR argument to the end of the command to switch the sensor(s) used.
+</code></pre>
+
+    </body>
+    </html>

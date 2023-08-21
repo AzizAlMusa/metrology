@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<library path="lib/libadd_post_pro_equiv_arm_moveit_ikfast_plugin">
+  <class base_class_type="kinematics::KinematicsBase" name="add_post_pro_equiv_arm/IKFastKinematicsPlugin" type="add_post_pro_equiv_arm::IKFastKinematicsPlugin">
+    <description>IKFast61 plugin for closed-form kinematics of add_post_pro_equiv arm</description>
+  </class>
+</library>

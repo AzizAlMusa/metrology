@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="add_post_pro_robot_3050" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:include filename="$(find denso_robot_descriptions)/vs6577_description/urdf/vs6577.urdf.xacro"/>
+
+    <xacro:include filename="$(find add_post_pro_robot)/urdf/new_sensor_holder.urdf.xacro"/>
+</robot>

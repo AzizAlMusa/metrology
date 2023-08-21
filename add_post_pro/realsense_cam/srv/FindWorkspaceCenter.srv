@@ -1,0 +1,7 @@
+---
+# Success: TRUE if frame is successfully delivered.
+# Reason: detail of error if not succeeded.
+bool success
+geometry_msgs/PointStamped point
+float64 z_change
+float64 x_change

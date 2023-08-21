@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: add_post_pro_robot
+    relative_path: urdf/add_post_pro_equiv.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/add_post_pro_equiv.srdf
+  CONFIG:
+    author_name: potato
+    author_email: potato@potato.com
+    generated_timestamp: 1669983236

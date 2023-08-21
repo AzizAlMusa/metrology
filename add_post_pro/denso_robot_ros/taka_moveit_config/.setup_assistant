@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: denso_robot_descriptions
+    relative_path: taka_description/urdf/taka.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/taka.srdf
+  CONFIG:
+    author_name: potato
+    author_email: potato@potato.com
+    generated_timestamp: 1668257360

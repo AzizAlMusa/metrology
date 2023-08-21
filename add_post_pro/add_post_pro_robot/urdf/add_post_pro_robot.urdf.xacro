@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="add_post_pro_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:arg name="sim" default="True" />
+    <xacro:include filename="$(find denso_robot_descriptions)/vs6577_description/urdf/vs6577.urdf.xacro"/>
+
+    <!-- <xacro:include filename="$(find add_post_pro_robot)/urdf/turntable.urdf.xacro"/> -->
+
+    <!-- Create camera instance -->
+    <!-- <turntable parent="world">
+		<origin xyz="0 -.6 0.16" rpy="0 0 0"/>
+    </turntable> -->
+
+    <xacro:include filename="$(find add_post_pro_robot)/urdf/multisensor_holder.urdf.xacro"/>
+</robot>

@@ -1,0 +1,7 @@
+<launch>
+	<include file="$(find depowdering_bringup)/launch/depowdering_bringup.launch">
+		<arg name="sim" default="true"/>
+	</include>
+	<node pkg="realsense_cam" type="realsense_cam" name="realsense_services"/>
+
+</launch>

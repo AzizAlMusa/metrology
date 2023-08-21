@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>realsense_cam</name>
+  <version>0.1.0</version>
+  <description>
+    The realsense_cam package. This package is a wrapper package for the RealSense D415/D430.
+    This package provides services to fetch images and pointclouds from the RealSense D415 camera. 
+    1.0 will provide the following functionalities:
+      -Fetch One Depth Image from the camera
+      -Fetch One PointCloud2 message from the camera (pointclouds must be enabled in the camera's launch file as either the launch argument "enable_pointcloud"
+        or by adding "pointcloud" as an entry in the launch argument "filters" )
+      -Convert a depth image into a PointCloud2 (by default, the D415 Pointclouds are unorganized with a slightly varying number of points, while the Depth Images are width*height arrays)
+  </description>
+
+  <maintainer email="tswierze@andrew.cmu.edu">Tomasz Swierzewski</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>realsense2_camera</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>roslib</build_depend>
+  <build_depend>depth_image_proc</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>pcl_conversions</build_depend>
+  <build_depend>ros_numpy</build_depend>
+
+  <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>message_generation</build_export_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
+
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>realsense2_camera</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>roslib</exec_depend>
+  <exec_depend>depth_image_proc</exec_depend>
+  <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>pcl_conversions</exec_depend>
+  <exec_depend>ros_numpy</exec_depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>

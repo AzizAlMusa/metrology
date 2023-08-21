@@ -1,0 +1,16 @@
+<!-- This node takes the pointclouds resulting from the scancontrol2900-50 scanner and converts them to laserscan messages -->
+<launch>
+    <node name="pcl_to_laserscan" type="pointcloud_to_laserscan_node" pkg="pointcloud_to_laserscan" respawn="true">
+        <remap from="cloud_in" to="arm/laser_scan"/>
+        <remap from="scan" to="arm/laser_scan_laser"/>
+        <param name="min_height" type="double" value="-1.0"/>
+        <param name="max_height" type="double" value="10"/>
+        <param name="angle_min" type="double" value="-0.7065"/>
+        <param name="angle_max" type="double" value="0.7065"/>
+        <param name="angle_increment" type="double" value=".003068"/>
+        <param name="range_min" type="double" value="0.0"/>
+        <param name="range_max" type="double" value="1.0"/>
+        <param name="concurrency_level" type="int" value="2"/>
+        <param name="target_frame" type="string" value="scancontrol2900-50_laser"/>
+    </node>
+</launch>

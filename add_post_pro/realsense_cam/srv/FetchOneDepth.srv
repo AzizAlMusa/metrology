@@ -1,0 +1,6 @@
+---
+# Success: TRUE if frame is successfully delivered.
+# Reason: detail of error if not succeeded.
+bool success
+string reason
+sensor_msgs/Image depth

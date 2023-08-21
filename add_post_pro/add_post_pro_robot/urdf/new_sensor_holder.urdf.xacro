@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:property name="M_PI" value="3.1415926535897931" />
+
+    	<link name="3050_scanner_holder">
+		<visual>
+			<origin rpy="0 0 0" xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="package://add_post_pro_robot/meshes/new_sensor_holder.stl" scale=".001 .001 .001"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="package://add_post_pro_robot/meshes/new_sensor_holder.stl" scale=".001 .001 .001"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="1"/>
+			<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.000000"/>
+			<inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+		</inertial>
+	</link>
+
+    <joint name="end_effector_mount" type="fixed">
+		<parent link="J6"/>
+		<child link="3050_scanner_holder"/>
+		<origin rpy="0.000000 ${M_PI} ${5*M_PI/4}" xyz="0.000000 0.000000 0.000000"/>
+	</joint>
+
+    <xacro:include filename="$(find micro_epsilon_scancontrol_description)/urdf/scancontrol_30xx_25_macro.xacro"/>
+    <xacro:microepsilon_scancontrol_30xx_25 prefix="scancontrol_"/>
+    <joint name="scanner_mount" type="fixed">
+        <parent link="3050_scanner_holder"/>
+        <child link="scancontrol_base_link"/>
+        <origin rpy="0.000000 0.000000 0.000000" xyz="0.050000 0.110000 0.000000"/>
+    </joint>
+</robot>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="tool" xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<!-- DONE -->
+    <link name="EEF_tool_holder">
+		<visual>
+			<origin rpy="0 0 0" xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="package://add_post_pro_robot/meshes/tool_holder_magnet.stl" scale=".001 .001 .001"/>
+			</geometry>
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0"/>
+			<geometry>
+				<mesh filename="package://add_post_pro_robot/meshes/tool_holder_magnet.stl" scale=".001 .001 .001"/>
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="1"/>
+			<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.000000"/>
+			<inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+		</inertial>
+	</link>
+    
+    <joint name="end_effector_tool_holder" type="fixed">
+		<parent link="EEF_tool_mount"/>
+		<child link="EEF_tool_holder"/>
+		<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.013000"/>
+	</joint>
+    <gazebo reference="EEF_tool_holder">
+        <material>Gazebo/CoM</material>
+    </gazebo>
+</robot>

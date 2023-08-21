@@ -1,0 +1,71 @@
+<launch>
+    <arg name="sim" default="true"/>
+
+    <!-- Launch pointcloud conversion nodes -->
+    <group ns="img_proc" if="$(arg sim)">
+      <node pkg="nodelet" type="nodelet" args="manager"
+        name="sensor_PC" output="screen"/>
+
+      <node pkg="image_proc" type="image_proc" name="ip_node1"/>
+
+      <node pkg="nodelet" type="nodelet" name="metric_rect" 
+        args="load depth_image_proc/convert_metric sensor_PC --no-bond">
+        <remap from="image_raw" to="/D415/depth/image_raw"/>
+        <remap from="image" to="/D415/depth/metric_image"/>
+      </node>
+
+      <!-- Convert it into a point cloud -->
+      <node pkg="nodelet" type="nodelet" name="cloudify"
+        args="load depth_image_proc/point_cloud_xyzrgb sensor_PC --no-bond">
+        <remap from="depth_registered/image_rect" to="/D415/depth/metric_image"/>
+        <remap from="rgb/camera_info" to="/D415/color/camera_info"/>
+        <remap from="rgb/image_rect_color" to="/D415/color/image_raw"/>
+        <remap from="depth_registered/points" to="/D415/depth/color/points"/>
+      </node>
+    </group>
+
+    <node pkg="realsense_cam" type="realsense_cam" name="realsense_services" output="screen">
+      <param name="pcl_save_dir_name" value="$(find realsense_cam)/data/"/>
+      <param if="$(arg sim)" name="realsense_pointcloud_topic" value="/D415/depth/color/points"/>
+    </node>
+    <node pkg="realsense_cam" type="im_processing.py" name="im_processing" output="screen"/>
+    <group unless="$(arg sim)"> 
+      <include file="$(find realsense2_camera)/launch/rs_rgbd.launch">
+        <arg name="camera" default="D415"/>
+        <arg name="depth_width" default="1280"/>
+        <arg name="depth_height" default="720"/>
+        <arg name="color_width" default="1280"/>
+        <arg name="color_height" default="720"/>
+        <arg name="infra_width" default="1280"/>
+        <arg name="infra_height" default="720"/>
+        <arg name="align_depth" default="true"/>
+        <arg name="depth_fps" default="15"/>  
+        <arg name="infra_fps" default="15"/>
+        <arg name="color_fps" default="15"/>
+        <arg name="fisheye_fps" default="15"/>
+        <arg name="enable_pointcloud" default="false"/>
+        <arg name="filters" default="colorizer,spatial,temporal"/>
+        <arg name="initial_reset" default="true"/>
+      </include>
+            <node pkg="nodelet" type="nodelet" args="manager"
+        name="sensor_PC" output="screen"/>
+
+      <node pkg="image_proc" type="image_proc" name="ip_node1"/>
+
+      <node pkg="nodelet" type="nodelet" name="metric_rect" 
+        args="load depth_image_proc/convert_metric sensor_PC --no-bond">
+        <remap from="image_raw" to="/D415/aligned_depth_to_color/image_raw"/>
+        <remap from="image" to="/D415/depth/metric_image"/>
+      </node>
+
+      <!-- Convert it into a point cloud -->
+      <node pkg="nodelet" type="nodelet" name="cloudify"
+        args="load depth_image_proc/point_cloud_xyzrgb sensor_PC --no-bond">
+        <remap from="depth_registered/image_rect" to="/D415/depth/metric_image"/>
+        <remap from="rgb/camera_info" to="/D415/color/camera_info"/>
+        <remap from="rgb/image_rect_color" to="/D415/color/image_rect_color"/>
+        <remap from="depth_registered/points" to="/D415/depth/color/points"/>
+      </node>
+    </group>
+
+</launch>

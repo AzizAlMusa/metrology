@@ -1,0 +1,9 @@
+<launch>
+    <node name="laser_processor" type="laser_processor" pkg="pcl_sensor_data">
+        <param name="start_service_name" value="/start_recording" />
+        <param name="stop_service_name" value="/stop_recording" />
+        <param name="restart_service_name" value="/restart_recording" />
+        <param name="process_service_name" value="/process_pointcloud" />
+        <param name="scanner_frame_id" value="scancontrol_aperture_frame" />
+    </node>
+</launch>

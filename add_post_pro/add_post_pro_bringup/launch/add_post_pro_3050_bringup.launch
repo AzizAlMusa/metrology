@@ -1,0 +1,77 @@
+<!-- This launch file will create nodes responsible for live robot manipulation -->
+<launch>
+
+    <arg name="ip_address" default="169.254.221.17" />
+
+    <!-- If you want to change send and recieve format of denso_robot_control, -->
+    <!-- you can specify the send_format and recv_format parameters -->
+    <arg name="send_format" default="288" />
+    <arg name="recv_format" default="292" />
+    <arg name="denso_robot" default="vs6577"/>
+    <arg name="robot_name" default="add_post_pro_robot_3050"/>      <!-- Change default for different environments-->
+    <arg name="config_name" default="$(find add_post_pro_bringup)/rviz/add_post_pro_default.rviz"/>
+    <arg name="load_robot_description" default="true"/>
+    <arg name="robot_description" default="robot_description"/>
+    <arg name="bcap_slave_control_cycle_msec" default="8" />
+    <!-- If in C107 -->
+    <!-- <include file="$(find add_post_pro_robot_vs050_config)/launch/planning_context.launch" if="$(eval denso_robot =='vs050')">
+        <arg name="load_robot_description" value="true" />
+    </include> -->
+
+    <!-- Used for scanning tests in b120 -->
+    <!-- <include file="$(find add_post_pro_robot_3050_config)/launch/planning_context.launch" unless="$(eval denso_robot =='vs050')">
+        <arg name="load_robot_description" value="true" />
+    </include> -->
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <param name="use_gui" value="false"/>
+        <param name="publish_frequency" type="double" value="125.0" />
+        <rosparam param="source_list" subst_value = "true">[/$(arg robot_name)/joint_states]</rosparam>
+    </node>
+
+<!-- BEGIN LIVE CONTROL NODES -->
+    <!-- <include file="$(find denso_robot_control)/launch/denso_robot_control.launch">
+        <arg name="robot_name" value="$(arg denso_robot)" />
+        <arg name="ip_address" value="$(arg ip_address)" />
+        <arg name="send_format" value="$(arg send_format)" />
+        <arg name="recv_format" value="$(arg recv_format)" />
+    </include> -->
+
+    <include ns="/$(arg robot_name)" file="$(find bcap_service)/launch/bcap_service.launch.xml">
+        <arg name="ip_address" value="$(arg ip_address)" />
+    </include>
+
+    <include ns="/$(arg robot_name)" file="$(find denso_robot_core)/launch/denso_robot_core.launch.xml">
+        <arg name="bcap_slave_control_cycle_msec" value="$(arg bcap_slave_control_cycle_msec)" />
+    </include>
+
+    <include ns="/$(arg robot_name)" file="$(find denso_robot_control)/launch/denso_robot_control.launch.xml">
+        <arg name="send_format" value="$(arg send_format)" />
+        <arg name="recv_format" value="$(arg recv_format)" />
+    </include>
+
+    <!-- Load the URDF, SRDF and other .yaml configuration files on the param server -->
+    <param name="robot_description" command="xacro  '$(find add_post_pro_robot)/urdf/add_post_pro_robot_3050.urdf.xacro'"/>
+    <!-- Controller -->
+    <include ns="/$(arg robot_name)" file="$(find add_post_pro_robot)/config/vs6577.launch.xml" />
+    <node name="denso_robot_control" pkg="denso_robot_control" type="denso_robot_control" output="screen" ns="/$(arg robot_name)"/>
+
+    <rosparam file="$(find add_post_pro_robot)/config/add_post_pro_robot_3050_control.yaml" command="load" />
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+        ns="/$(arg robot_name)" args="joint_state_controller arm_controller" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher"
+        type="robot_state_publisher" respawn="false" output="screen">
+        <remap from="/joint_states" to="/$(arg robot_name)/joint_states" />
+    </node>
+
+    <include file="$(find add_post_pro_robot_3050_config)/launch/move_group.launch">
+        <arg name="publish_monitored_planning_scene" value="true" />
+    </include>
+<!-- END LIVE CONTROL NODES -->
+    <param name="$(arg robot_description)" command="xacro '$(find add_post_pro_robot)/urdf/add_post_pro_robot_3050.urdf.xacro'" />
+    <include file="$(find add_post_pro_robot_vs050_config)/launch/move_group.launch" if="$(eval denso_robot == 'vs050')">
+        <arg name="publish_monitored_planning_scene" value="true" />
+    </include>
+
+</launch>

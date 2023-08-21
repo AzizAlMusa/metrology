@@ -1,0 +1,35 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/cerlab/ashwin_ws/devel/include/**",
+                "/opt/ros/melodic/include/**",
+                "/home/cerlab/ashwin_ws/src/add_post_pro/add_post_pro_control/include/**",
+                "/home/cerlab/ashwin_ws/src/add_post_pro/denso_robot_ros/bcap_core/include/**",
+                "/home/cerlab/ashwin_ws/src/add_post_pro/denso_robot_ros/bcap_service/include/**",
+                "/home/cerlab/ashwin_ws/src/add_post_pro/denso_robot_ros/denso_robot_control/include/**",
+                "/home/cerlab/ashwin_ws/src/add_post_pro/denso_robot_ros/denso_robot_core/include/**",
+                "/home/cerlab/ashwin_ws/src/gazebo_ros_link_attacher/include/**",
+                "/home/cerlab/ashwin_ws/src/add_post_pro/realsense_gazebo_plugin/include/**",
+                "/home/cerlab/harsh/meterology/devel/include/**",
+                "/home/cerlab/harsh/meterology/src/add_post_pro/add_post_pro_control/include/**",
+                "/home/cerlab/harsh/meterology/src/add_post_pro/denso_robot_ros/bcap_core/include/**",
+                "/home/cerlab/harsh/meterology/src/add_post_pro/denso_robot_ros/bcap_service/include/**",
+                "/home/cerlab/harsh/meterology/src/add_post_pro/denso_robot_ros/denso_robot_control/include/**",
+                "/home/cerlab/harsh/meterology/src/add_post_pro/denso_robot_ros/denso_robot_core/include/**",
+                "/home/cerlab/harsh/meterology/src/add_post_pro/realsense_gazebo_plugin/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14"
+        }
+    ],
+    "version": 4
+}

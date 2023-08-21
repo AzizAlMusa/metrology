@@ -1,0 +1,7 @@
+controller_list:
+  - name: fake_actuator_controller
+    joints:
+      - linear_prismatic_joint
+initial:  # Define initial robot poses.
+  - group: actuator
+    pose: home

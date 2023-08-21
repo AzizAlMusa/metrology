@@ -1,0 +1,64 @@
+<launch>
+    <arg name="direct_joint_control" default="false"/>
+
+    <!-- Override robot_name argument -->
+    <arg name="robot_name" default="add_post_pro_robot" />
+
+    <env name="GAZEBO_MODEL_PATH" value="$(find add_post_pro_simulation)/gazebo_models/"/>
+
+    <!-- "depowdering" or "metrology" -->
+    <arg name="processing_phase" default="depowdering"/>
+
+    <arg name="load_robot_description" default="true"/>
+    <arg name="robot_description" default="$(arg robot_name)_description" />
+    <arg name="world_path" default="$(find add_post_pro_simulation)/world/$(arg processing_phase).world"/>
+    <arg name="config_name" default="$(find add_post_pro_bringup)/rviz/add_post_pro_default.rviz"/>
+    <arg name="x" default="-0.01"/>
+    <arg name="y" default="0"/>
+    <arg name="z" default="0.0925"/>
+
+    <include file="$(find add_post_pro_config)/launch/move_group.launch">
+      <arg name="publish_monitored_planning_scene" value="true" />
+    </include>
+
+    <group if="$(eval processing_phase == 'depowdering')"> 
+      <node name="spawn_depowdering_surface" pkg="add_post_pro_simulation" type="spawn_depowdering_surface.py"/>
+    </group>
+    
+    <node name="spawn_object" pkg="add_post_pro_simulation" type="spawn_object.py"/>
+    <node name="create_gaz_model" pkg="add_post_pro_simulation" type="create_gaz_model.py"/>
+    <node name="laser_processor" pkg="pcl_sensor_data" type="laser_processor"/>
+
+    <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro '$(find add_post_pro_simulation)/urdf/add_post_pro_robot.urdf.xacro'" />
+    
+    <!-- Robot description argument -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="world_name" value="$(arg world_path)"/>
+      <arg name="verbose" value="true"/>
+    </include>
+    
+    <!-- Load the URDF, SRDF and other .yaml configuration files on the param server -->
+    <param name="robot_description" command="xacro  '$(find add_post_pro_simulation)/urdf/$(arg robot_name).urdf.xacro'"/>
+
+    <arg name="gui" default="true"/>
+    <param name="use_gui" value="$(arg gui)"/>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <param name="use_gui" value="false"/>
+        <param name="publish_frequency" type="double" value="125.0" />
+        <rosparam param="source_list" subst_value = "true">[/$(arg robot_name)/joint_states]</rosparam>
+    </node>
+    
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model $(arg robot_name) -x $(arg x) -y $(arg y) -z $(arg z)" />
+
+    <!-- <rosparam file="$(find add_post_pro_simulation)/config/add_post_pro_control.yaml" command="load" /> -->
+    <rosparam file="$(find add_post_pro_config)/config/add_post_pro_controllers.yaml" command="load"/>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+    ns="/$(arg robot_name)" args="joint_state_controller arm_controller turntable_controller" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" 
+          type="robot_state_publisher" respawn="false" output="screen">
+      <remap from="/joint_states" to="/$(arg robot_name)/joint_states" />
+    </node>
+
+</launch>

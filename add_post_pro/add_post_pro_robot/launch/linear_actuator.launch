@@ -1,0 +1,17 @@
+<launch>
+    
+    
+    <param name="robot_description" command="xacro '$(find add_post_pro_robot)/urdf/linear_actuator.urdf.xacro'"/>
+
+
+    <node name="linear_actuator_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
+          args="-urdf -param robot_description -model linear_actuator" />
+    
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    
+    <node name="rviz" pkg="rviz" type="rviz"/>
+    
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+        <param name="use_gui" value="True"/>
+    </node>
+</launch>

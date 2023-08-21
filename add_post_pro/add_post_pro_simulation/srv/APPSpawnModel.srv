@@ -1,0 +1,7 @@
+string model_name
+string instance_name
+bool turntable
+geometry_msgs/Pose pose
+string parent_frame
+---
+bool success

@@ -1,0 +1,3 @@
+---
+# Success: TRUE if frame is successfully delivered.
+bool success

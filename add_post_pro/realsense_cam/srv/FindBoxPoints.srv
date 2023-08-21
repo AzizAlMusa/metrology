@@ -1,0 +1,10 @@
+---
+# Success: TRUE if frame is successfully delivered.
+# Reason: detail of error if not succeeded.
+bool success
+
+# Points: Pointcloud of points inside the work area 
+sensor_msgs/PointCloud2 points
+
+# Boundary_points: 2 points representing top-left & bottom-right of the work area, respectively
+geometry_msgs/PointStamped[] boundary_points

@@ -1,0 +1,4 @@
+<launch>
+  <node name="signal_transformer" pkg="laser_scanner_pkg" type="my_node" />
+  <node name="aggregate_laser_scans" pkg="laser_scanner_pkg" type="concatenate_pointcloud" />
+</launch>

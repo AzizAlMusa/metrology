@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: add_post_pro_robot
+    relative_path: urdf/linear_actuator.urdf
+    xacro_args: ""
+  SRDF:
+    relative_path: config/linear_actuator.srdf
+  CONFIG:
+    author_name: Harsh Dhruva
+    author_email: hdhruva@andrew.cmu.edu
+    generated_timestamp: 1616655141
