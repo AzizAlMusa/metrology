@@ -150,6 +150,8 @@ include_directories(
 add_executable(get_joint_solution src/get_joint_solution.cpp)
 
 add_executable(potato src/potato.cpp)
+
+add_executable(move_tests src/move_tests.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -167,6 +169,8 @@ add_executable(potato src/potato.cpp)
 target_link_libraries(get_joint_solution ${catkin_LIBRARIES})
 
 target_link_libraries(potato ${catkin_LIBRARIES})
+
+target_link_libraries(move_tests ${catkin_LIBRARIES})
 #############
 ## Install ##
 #############

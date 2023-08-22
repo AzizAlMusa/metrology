@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="structured_light_scanner" params="parent">
+
+    <!-- Scanner link -->
+    <link name="EEF_structured_light_scanner">
+      <visual>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+          <mesh filename="package://add_post_pro_robot/meshes/tool_mount.stl" scale=".001 .001 .001"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+          <mesh filename="package://add_post_pro_robot/meshes/tool_mount.stl" scale=".001 .001 .001"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="1"/>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+      </inertial>
+    </link>
+
+    <!-- Camera link -->
+    <link name="scanner_camera"/>
+    <joint name="scanner_to_camera" type="fixed">
+      <parent link="EEF_structured_light_scanner"/>
+      <child link="scanner_camera"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Attach scanner to parent link -->
+    <joint name="parent_to_scanner" type="fixed">
+      <parent link="J6"/>
+      <child link="EEF_structured_light_scanner"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </joint>
+
+    <!-- Gazebo camera sensor to capture deformed pattern -->
+    <gazebo reference="scanner_camera">
+      <sensor type="camera" name="structured_light_camera">
+        <update_rate>30.0</update_rate>
+        <camera>
+          <horizontal_fov>1.3962634</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>100</far>
+          </clip>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <alwaysOn>true</alwaysOn>
+          <updateRate>0.0</updateRate>
+          <cameraName>structured_light_camera</cameraName>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>scanner_camera</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>
