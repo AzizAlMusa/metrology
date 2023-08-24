@@ -1,0 +1,20 @@
+<launch>
+
+    <!-- Load the URDF into the ROS Parameter Server -->
+    <param name="robot_description" command="xacro '$(find add_post_pro_robot)/urdf/standalone_depth_camera.urdf.xacro'" />
+ 
+    <!-- Start Gazebo with an empty world -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="worlds/empty.world"/>
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <!-- Spawn the standalone depth camera in Gazebo -->
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+          args="-param robot_description -urdf -model standalone_camera -x 0 -y 0 -z 1"/>
+
+</launch>

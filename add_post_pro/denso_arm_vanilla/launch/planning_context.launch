@@ -7,7 +7,7 @@
 
   <!-- Load universal robot description format (URDF) -->
   <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro  '$(find denso_robot_descriptions)/vs6577_description/urdf/vs6577.urdf.xacro'"/>
-
+  <!-- <param name="robot_description" command="xacro  '$(find add_post_pro_robot)/urdf/vanilla_with_structured_light.urdf.xacro'"/> -->
   <!-- The semantic description that corresponds to the URDF -->
   <param name="$(arg robot_description)_semantic" textfile="$(find denso_arm_vanilla)/config/vs6577.srdf" />
 

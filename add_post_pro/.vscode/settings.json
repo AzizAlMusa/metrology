@@ -1,14 +1,10 @@
 {
     "python.autoComplete.extraPaths": [
-        "/home/cerlab/ashwin_ws/devel/lib/python2.7/dist-packages",
+        "/home/abdulaziz/ros_workspaces/metrology/devel/lib/python2.7/dist-packages",
         "/opt/ros/melodic/lib/python2.7/dist-packages"
-],
-"python.linting.banditEnabled": false,
-"python.linting.enabled": true,
-"python.linting.flake8Enabled": true,
-"python.linting.flake8Args": [
-    "--max-line-length=120",
-    "--ignore=E999,F403,F405"
-],
-"files.trimTrailingWhitespace": true
+    ],
+    "python.analysis.extraPaths": [
+        "/home/abdulaziz/ros_workspaces/metrology/devel/lib/python2.7/dist-packages",
+        "/opt/ros/melodic/lib/python2.7/dist-packages"
+    ]
 }
