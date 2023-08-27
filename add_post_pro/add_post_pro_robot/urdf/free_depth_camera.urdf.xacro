@@ -5,27 +5,20 @@
   <xacro:property name="camera_width" value="0.05"/>
   <xacro:property name="camera_height" value="0.03"/>
   <xacro:property name="camera_depth" value="0.05"/>
-
-  <!-- World Link Definition -->
+  
+  <!-- Define the world link -->
   <link name="world"/>
 
-  <!-- Base Link Definition -->
-  <link name="base_link">
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="0.001"/>
-      <inertia ixx="1.0e-6" ixy="0" ixz="0" iyy="1.0e-6" iyz="0" izz="1.0e-6"/>
-    </inertial>
-  </link>
-
-  <!-- Joint connecting World to Base Link -->
-  <joint name="joint_w" type="fixed">
+  <!-- Joint to keep the cube floating -->
+  <joint name="floating_joint" type="fixed">
     <parent link="world"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 0"/>
+    <child link="camera_link"/>
+    <origin xyz="0 2 1" rpy="0 0 0"/>
   </joint>
 
+  <!-- Camera Link Definition -->
   <link name="camera_link">
+    <gravity>0 </gravity>
     <visual>
       <geometry>
         <box size="${camera_width} ${camera_height} ${camera_depth}"/>
@@ -43,16 +36,13 @@
       <mass value="0.1"/>
       <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
     </inertial>
+
   </link>
 
-  <joint name="base_to_camera_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="camera_link"/>
-    <origin xyz="1 0 0.5" rpy="0 0 0"/>
-  </joint>
 
   <!-- Depth Camera Plugin -->
   <gazebo reference="camera_link">
+  
     <sensor type="depth" name="depth_camera_sensor">
       <update_rate>30.0</update_rate>
       <camera>

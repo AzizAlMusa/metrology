@@ -1,0 +1,51 @@
+<launch>
+
+        <!-- Launch Gazebo with an empty world -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="worlds/empty.world"/> <!-- You can specify another world if you have one -->
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+         <param name="publish_frequency" type="double" value="50.0" />
+    </node>
+
+
+
+
+
+    <!-- Load the robot description (depth camera) to the parameter server -->
+    <param name="robot_description" command="xacro $(find add_post_pro_robot)/urdf/free_depth_camera.urdf.xacro" />
+
+    <!-- Spawn the depth camera robot model in Gazebo -->
+    <!-- <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model camera_robot" /> -->
+
+     <!-- Spawn the depth camera robot model in Gazebo using SDF -->
+    <node name="spawn_camera_robot" pkg="gazebo_ros" type="spawn_model" args="-file $(find depth_processing)/sdf/camera_model.sdf -sdf -model camera_robot -x 0 -y 0 -z 2" />
+
+
+    <!-- Load the random objects description to the parameter server -->
+    <param name="random_objects_description" command="xacro $(find add_post_pro_robot)/urdf/random_objects.xacro" />
+
+    <!-- Spawn the random objects in Gazebo -->
+    <node name="spawn_random_objects" pkg="gazebo_ros" type="spawn_model" args="-param random_objects_description -urdf -model random_objects" />
+
+    <!-- Start the C++ depth processor node -->
+    <node pkg="depth_processing" type="depth_processor" name="depth_processor_cpp" output="screen" >
+        <param name="use_voxel_filter" value="true"/>
+        <param name="use_sor_filter" value="true"/>
+        <param name="use_passthrough_filter" value="true"/>
+    </node>
+
+    <!-- Start the camera mover Python script -->
+    <node pkg="depth_processing" type="camera_mover.py" name="camera_mover" output="screen" />
+
+
+   
+
+
+</launch>

@@ -1,0 +1,27 @@
+<launch>
+
+  <!-- Load the robot description to the parameter server -->
+  <param name="robot_description" command="xacro $(find add_post_pro_robot)/urdf/standalone_depth_camera.urdf.xacro" />
+
+   <!-- Load the objects description to the parameter server -->
+  <param name="objects_description" command="xacro $(find add_post_pro_robot)/urdf/random_objects.xacro" /> <!-- Load the objects description to the parameter server -->
+
+  <!-- Start Gazebo with an empty world and the robot description -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="worlds/empty.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- Spawn the robot in Gazebo -->
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model camera_robot" />
+  
+  <!-- Spawn the objects in Gazebo -->
+  <node name="spawn_objects" pkg="gazebo_ros" type="spawn_model" args="-param objects_description -urdf -model objects" />
+    
+
+
+</launch>

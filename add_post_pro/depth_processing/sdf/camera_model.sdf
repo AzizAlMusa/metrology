@@ -1,0 +1,82 @@
+<sdf version="1.6">
+  <model name="camera_robot">
+    <link name="camera_link">
+      <gravity>0</gravity>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.05 0.03 0.05</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Blue</name>
+          </script>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.05 0.03 0.05</size>
+          </box>
+        </geometry>
+      </collision>
+      <inertial>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.0001</iyy>
+          <iyz>0</iyz>
+          <izz>0.0001</izz>
+        </inertia>
+      </inertial>
+
+      <!-- Depth Camera Plugin -->
+      <sensor type="depth" name="depth_camera_sensor">
+        <update_rate>30.0</update_rate>
+        <camera>
+          <horizontal_fov>1.3962634</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>100</far>
+          </clip>
+        </camera>
+        <plugin name="depth_camera_controller" filename="libgazebo_ros_depth_camera.so">
+          <alwaysOn>true</alwaysOn>
+          <updateRate>0.0</updateRate>
+          <cameraName>robot/depth_camera</cameraName>
+          <imageTopicName>depth_image_raw</imageTopicName>
+          <cameraInfoTopicName>depth_camera_info</cameraInfoTopicName>
+          <frameName>camera_link</frameName>
+        </plugin>
+        <visualize>1</visualize>
+      </sensor>
+
+        <!-- Regular Camera for FOV Visualization -->
+        <sensor type="camera" name="visualize_camera_sensor">
+            <update_rate>30.0</update_rate>
+            <camera>
+            <horizontal_fov>1.3962634</horizontal_fov>
+            <image>
+                <width>640</width>
+                <height>480</height>
+                <format>R8G8B8</format>
+            </image>
+            <clip>
+                <near>0.01</near>
+                <far>100</far>
+            </clip>
+            </camera>
+            <visualize>true</visualize>
+        </sensor>
+    </link>
+  </model>
+</sdf>

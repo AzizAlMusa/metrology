@@ -1,31 +1,38 @@
 <?xml version="1.0"?>
-<robot name="my_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- Properties -->
   <xacro:property name="camera_width" value="0.05"/>
   <xacro:property name="camera_height" value="0.03"/>
   <xacro:property name="camera_depth" value="0.05"/>
 
-  <!-- World Link Definition -->
-  <link name="world"/>
 
-  <!-- Base Link Definition -->
-  <link name="base_link">
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="0.001"/>
-      <inertia ixx="1.0e-6" ixy="0" ixz="0" iyy="1.0e-6" iyz="0" izz="1.0e-6"/>
-    </inertial>
-  </link>
+    
+ 
+    <!-- World Link Definition -->
+    <link name="world"/>
 
-  <!-- Joint connecting World to Base Link -->
-  <joint name="joint_w" type="fixed">
-    <parent link="world"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 0"/>
-  </joint>
+    <!-- Base Link Definition -->
+    <link name="base_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0.001"/>
+            <inertia ixx="1.0e-6" ixy="0" ixz="0" iyy="1.0e-6" iyz="0" izz="1.0e-6"/>
+        </inertial>
+    </link>
+
+    <!-- Joint connecting World to Base Link -->
+    <joint name="joint_w" type="fixed">
+        <parent link="world"/>
+        <child link="base_link"/>
+        <origin xyz="0 0 0"/>
+    </joint>
+
 
   <link name="camera_link">
+
+  
+
     <visual>
       <geometry>
         <box size="${camera_width} ${camera_height} ${camera_depth}"/>
@@ -34,45 +41,47 @@
         <color rgba="0 0 1 1.0"/>
       </material>
     </visual>
+
     <collision>
       <geometry>
         <box size="${camera_width} ${camera_height} ${camera_depth}"/>
       </geometry>
     </collision>
+
     <inertial>
+   
       <mass value="0.1"/>
       <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
     </inertial>
   </link>
 
-  <joint name="base_to_camera_joint" type="fixed">
+ <joint name="base_to_camera_joint" type="fixed">
     <parent link="base_link"/>
     <child link="camera_link"/>
-    <origin xyz="1 0 0.5" rpy="0 0 0"/>
-  </joint>
-
-  <!-- Depth Camera Plugin -->
+    <origin xyz="0 0 0.5" rpy="0 0 0"/> <!-- This positions the camera 1 unit higher relative to the base_link -->
+ </joint>
+  <!-- Camera Link -->
+  <!-- Camera Plugin -->
   <gazebo reference="camera_link">
-    <sensor type="depth" name="depth_camera_sensor">
+    <sensor type="camera" name="camera_sensor">
       <update_rate>30.0</update_rate>
       <camera>
         <horizontal_fov>1.3962634</horizontal_fov>
         <image>
           <width>640</width>
           <height>480</height>
-          <format>R8G8B8</format>
         </image>
         <clip>
           <near>0.01</near>
           <far>100</far>
         </clip>
       </camera>
-      <plugin name="depth_camera_controller" filename="libgazebo_ros_depth_camera.so">
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
-        <cameraName>robot/depth_camera</cameraName>
-        <imageTopicName>depth_image_raw</imageTopicName>
-        <cameraInfoTopicName>depth_camera_info</cameraInfoTopicName>
+        <cameraName>robot/camera</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>camera_link</frameName>
       </plugin>
       <visualize>1</visualize>
