@@ -23,8 +23,6 @@
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_eigen.h>
 
-#include <tf2_ros/transform_listener.h>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 
 class DepthProcessor
 {
@@ -34,11 +32,16 @@ public:
         cloud_sub_ = nh_.subscribe("/robot/depth_camera/points", 1, &DepthProcessor::pointCloudCallback, this);
         depth_image_sub_ = nh_.subscribe("/robot/depth_camera/image_raw", 1, &DepthProcessor::depthImageCallback, this);
         cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("filtered_cloud", 1);
+        adjusted_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("adjusted_cloud", 1);
         retrieved_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("retrieved_cloud", 1);
+        combined_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("combined_cloud", 1);
 
         capture_service_ = nh_.advertiseService("capture_measurement", &DepthProcessor::captureMeasurement, this);
         retrieve_service_ = nh_.advertiseService("get_measurement", &DepthProcessor::getMeasurement, this);
         align_service_ = nh_.advertiseService("align_measurements", &DepthProcessor::alignPointClouds, this);
+        publish_all_service_ = nh_.advertiseService("publish_all_measurements", &DepthProcessor::publishAllMeasurements, this);
+
+        
 
          // Load filter parameters
         nh_.param("use_voxel_filter", use_voxel_filter_, true);
@@ -62,9 +65,9 @@ public:
      */
     bool captureMeasurement(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
 {
-    if (current_cloud_)
+    if (current_cloud_) //current_cloud_
     {
-        measurements_.push_back(current_cloud_);
+        measurements_.push_back(current_cloud_); //current_cloud_
 
         // Capture the pose
         tf::StampedTransform transform;
@@ -141,6 +144,33 @@ public:
         }
     }
 
+    bool publishAllMeasurements(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+    {
+        if (measurements_.empty())
+        {
+            res.success = false;
+            res.message = "No measurements available.";
+            return true;
+        }
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr combined_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+        for (const auto& cloud : measurements_)
+        {
+            *combined_cloud += *cloud;
+        }
+
+        sensor_msgs::PointCloud2 output;
+        pcl::toROSMsg(*combined_cloud, output);
+        output.header.frame_id = "world";  // Assuming "world" is your global frame
+        combined_cloud_pub_.publish(output);
+
+        res.success = true;
+        res.message = "Published all measurements combined.";
+        return true;
+    }
+
+
 
 
     void depthImageCallback(const sensor_msgs::ImageConstPtr& image_msg)
@@ -159,12 +189,12 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
     
-     // Voxel Grid Filter
+    // Voxel Grid Filter
     if (use_voxel_filter_)
     {
         pcl::VoxelGrid<pcl::PointXYZ> voxel_filter;
         voxel_filter.setInputCloud(cloud);
-        voxel_filter.setLeafSize(0.1f, 0.1f, 0.1f);
+        voxel_filter.setLeafSize(0.01f, 0.01f, 0.01f);
         voxel_filter.filter(*cloud_filtered);
     }
 
@@ -184,7 +214,7 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
         pcl::PassThrough<pcl::PointXYZ> pass;
         pass.setInputCloud(cloud_filtered);
         pass.setFilterFieldName("z");
-        pass.setFilterLimits(0.0, 1.0);
+        pass.setFilterLimits(0.0, 2.0);
         pass.filter(*cloud_filtered);
     }
 
@@ -192,26 +222,21 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     sensor_msgs::PointCloud2 output;
     pcl::toROSMsg(*cloud_filtered, output);
     output.header = cloud_msg->header;  // Use the same header as the input cloud for consistency
-
-      sensor_msgs::PointCloud2 output;
-    pcl::toROSMsg(*cloud_filtered, output);
-    output.header = cloud_msg->header;
-
-    // Transform the point cloud to the desired frame
-    std::string target_frame = "base_link";
-    if (tf_buffer_.canTransform(target_frame, cloud_msg->header.frame_id, cloud_msg->header.stamp, ros::Duration(1.0)))
-    {
-        sensor_msgs::PointCloud2 transformed_cloud;
-        tf2::doTransform(output, transformed_cloud, tf_buffer_.lookupTransform(target_frame, cloud_msg->header.frame_id, cloud_msg->header.stamp));
-        transformed_cloud.header.frame_id = target_frame;
-        cloud_pub_.publish(transformed_cloud);
-    }
-    else
-    {
-        ROS_WARN("Cannot transform point cloud from frame %s to frame %s", cloud_msg->header.frame_id.c_str(), target_frame.c_str());
-    }
     current_cloud_ = cloud_filtered;
     cloud_pub_.publish(output);
+
+    // Apply a 90-degree rotation around the y-axis to the point cloud
+    Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+    transform.rotate(Eigen::AngleAxisf(1.5708, Eigen::Vector3f::UnitY())); // 1.5708 radians = 90 degrees
+    transform.rotate(Eigen::AngleAxisf(-1.5708, Eigen::Vector3f::UnitZ())); // -1.5708 radians = -90 degrees for x-axis
+    pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::transformPointCloud(*cloud_filtered, *transformed_cloud, transform);
+
+    sensor_msgs::PointCloud2 adjusted_output;
+    pcl::toROSMsg(*transformed_cloud, adjusted_output);
+    adjusted_output.header = cloud_msg->header;  // Use the same header as the input cloud for consistency
+    adjusted_cloud_ = transformed_cloud;
+    adjusted_cloud_pub_.publish(adjusted_output);
 
     // ROS_INFO("Received point cloud with %lu points, filtered to %lu points", cloud->points.size(), cloud_filtered->points.size());
 }
@@ -223,7 +248,7 @@ bool alignPointClouds(std_srvs::Trigger::Request &req, std_srvs::Trigger::Respon
     if (measurements_.size() < 2)
     {
         res.success = false;
-        res.message = "Not enough point clouds for alignment.";
+        res.message = "Not  enough point clouds for alignment.";
         return true;
     }
 
@@ -258,20 +283,24 @@ private:
     ros::NodeHandle nh_;
     ros::Subscriber cloud_sub_;
     ros::Subscriber depth_image_sub_;
+
     ros::Publisher cloud_pub_;  
+    ros::Publisher adjusted_cloud_pub_;
     ros::Publisher retrieved_cloud_pub_;
+    ros::Publisher combined_cloud_pub_;
+
     ros::ServiceServer capture_service_;
     ros::ServiceServer retrieve_service_;
     ros::ServiceServer align_service_;
+    ros::ServiceServer publish_all_service_;
+
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr current_cloud_;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr adjusted_cloud_;
     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> measurements_;
     std::vector<Eigen::Matrix4f> poses_;
 
     tf::TransformListener* tf_listener_;
-
-    tf2_ros::Buffer tf_buffer_;
-    tf2_ros::TransformListener tf_listener_;
 
  
      // Filter flags

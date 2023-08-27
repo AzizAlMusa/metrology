@@ -10,12 +10,13 @@
         <arg name="debug" value="false"/>
     </include>
 
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-         <param name="publish_frequency" type="double" value="50.0" />
+    
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <param name="use_gui" value="false"/>
     </node>
 
-
-
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
 
     <!-- Load the robot description (depth camera) to the parameter server -->
@@ -45,7 +46,13 @@
     <node pkg="depth_processing" type="camera_mover.py" name="camera_mover" output="screen" />
 
 
-   
+    <!-- Start the camera_link TF publisher -->
+    <node pkg="depth_processing" type="camera_link_tf_publisher.py" name="camera_link_tf_publisher" output="screen" />
+
+    <!-- Adjust pointcloud read from depth camera -->
+    <node pkg="tf" type="static_transform_publisher" name="pointcloud_tf_adjust" args="0 0 0 0 1.5708 0 camera_link camera_link_adjusted 100" />
+
+
 
 
 </launch>

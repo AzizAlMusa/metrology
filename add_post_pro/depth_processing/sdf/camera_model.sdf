@@ -57,6 +57,8 @@
           <cameraInfoTopicName>depth_camera_info</cameraInfoTopicName>
           <frameName>camera_link</frameName>
         </plugin>
+
+
         <visualize>1</visualize>
       </sensor>
 
@@ -78,5 +80,13 @@
             <visualize>true</visualize>
         </sensor>
     </link>
+
+    <!-- Link State Publisher Plugin -->
+    <plugin name="link_state_publisher" filename="libgazebo_ros_link_state.so">
+      <link_name>camera_link</link_name>
+      <robot_namespace>/robot</robot_namespace>
+      <publish_rate>50</publish_rate>
+    </plugin>
+
   </model>
 </sdf>
