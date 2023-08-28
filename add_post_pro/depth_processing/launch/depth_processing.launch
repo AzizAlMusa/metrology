@@ -50,8 +50,10 @@
     <node pkg="depth_processing" type="camera_link_tf_publisher.py" name="camera_link_tf_publisher" output="screen" />
 
     <!-- Adjust pointcloud read from depth camera -->
-    <node pkg="tf" type="static_transform_publisher" name="pointcloud_tf_adjust" args="0 0 0 0 1.5708 0 camera_link camera_link_adjusted 100" />
+    <node pkg="tf" type="static_transform_publisher" name="pointcloud_tf_adjust" args="0 0 0 -1.5708 0 -1.5708 camera_link camera_link_adjusted 100" />
 
+    <!-- Launch Rviz-->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find depth_processing)/config/config.rviz" />
 
 
 

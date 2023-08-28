@@ -23,6 +23,8 @@
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_eigen.h>
 
+#include <pcl_ros/transforms.h>
+
 
 class DepthProcessor
 {
@@ -31,6 +33,7 @@ public:
     {
         cloud_sub_ = nh_.subscribe("/robot/depth_camera/points", 1, &DepthProcessor::pointCloudCallback, this);
         depth_image_sub_ = nh_.subscribe("/robot/depth_camera/image_raw", 1, &DepthProcessor::depthImageCallback, this);
+
         cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("filtered_cloud", 1);
         adjusted_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("adjusted_cloud", 1);
         retrieved_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("retrieved_cloud", 1);
@@ -63,49 +66,36 @@ public:
      * @param res Service response. Contains a success flag and a message.
      * @return true if the service completed successfully, false otherwise.
      */
-    bool captureMeasurement(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+bool captureMeasurement(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
 {
-    if (current_cloud_) //current_cloud_
-    {
-        measurements_.push_back(current_cloud_); //current_cloud_
-
-        // Capture the pose
+     if (adjusted_cloud_) // Check if there's any data
+    {   
         tf::StampedTransform transform;
         try
         {
-            // Assuming the transformation is from a "world" frame to the "camera_link" frame.
-            // Adjust the frame names as per your setup.
             tf_listener_->lookupTransform("world", "camera_link", ros::Time(0), transform);
-         
+            measurements_.push_back(adjusted_cloud_);  // Store the transformed point cloud
+            transforms_.push_back(transform);  // Store the transform
+
+            res.success = true;
+            res.message = "Measurement captured successfully!";
+            return true;
         }
         catch (tf::TransformException &ex)
         {
-            ROS_WARN("Failed to get camera pose: %s", ex.what());
+            ROS_WARN("TF exception:\n%s", ex.what());
             res.success = false;
-            res.message = "Failed to get camera pose.";
-            return true;
+            res.message = "Failed to capture measurement due to TF exception.";
+            return false;
         }
-
-        // Convert tf::StampedTransform to Eigen::Matrix4f
-        Eigen::Matrix4f eigen_transform;
-        Eigen::Translation3f trans(transform.getOrigin().x(), transform.getOrigin().y(), transform.getOrigin().z());
-        Eigen::Quaternionf quat(transform.getRotation().w(), transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z());
-        eigen_transform = (trans * quat).matrix();
-
-
-
-        // Store the captured pose
-        poses_.push_back(eigen_transform);
-
-        res.success = true;
-        res.message = "Measurement and pose captured successfully.";
-        return true;
     }
-    res.success = false;
-    res.message = "No current cloud available to capture.";
-    return true;
+    else
+    {
+        res.success = false;
+        res.message = "No adjusted point cloud data available!";
+        return false;
+    }
 }
-
 
 
     /**
@@ -126,6 +116,7 @@ public:
             // Convert the last stored point cloud to a ROS message
             sensor_msgs::PointCloud2 output;
             pcl::toROSMsg(*measurements_.back(), output);
+            // pcl::toROSMsg(*measurements_[0], output);
             
             // Publish the point cloud on the retrieved_cloud topic
             retrieved_cloud_pub_.publish(output);
@@ -144,33 +135,53 @@ public:
         }
     }
 
-    bool publishAllMeasurements(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+bool publishAllMeasurements(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res){
+
+     // Check if there are any measurements stored
+    if (!measurements_.empty())
     {
-        if (measurements_.empty())
+        // Ensure the two vectors are of the same size
+        if (measurements_.size() != transforms_.size())
         {
+            ROS_ERROR("Mismatch in sizes between measurements and transforms. Cannot proceed.");
             res.success = false;
-            res.message = "No measurements available.";
-            return true;
+            res.message = "Internal error: Mismatch in sizes.";
+            return false;
         }
 
+        // Create an empty combined point cloud
         pcl::PointCloud<pcl::PointXYZ>::Ptr combined_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
-        for (const auto& cloud : measurements_)
+        // Iterate through all measurements and append them to the combined_cloud
+        for (size_t i = 0; i < measurements_.size(); i++)
         {
-            *combined_cloud += *cloud;
+            pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+            pcl_ros::transformPointCloud(*measurements_[i], *transformed_cloud, transforms_[i]);
+            *combined_cloud += *transformed_cloud;
         }
 
+        // Convert the combined point cloud to a ROS message
         sensor_msgs::PointCloud2 output;
         pcl::toROSMsg(*combined_cloud, output);
-        output.header.frame_id = "world";  // Assuming "world" is your global frame
-        combined_cloud_pub_.publish(output);
+        output.header.frame_id = "world";  // We'll use the world frame since it's a combined cloud
 
+        // Publish the combined point cloud on the combined_cloud_pub_ topic
+        combined_cloud_pub_.publish(output);
+        
+        // Set the success flag and message for the service response
         res.success = true;
-        res.message = "Published all measurements combined.";
+        res.message = "Published the combined measurements on the combined_cloud topic.";
         return true;
     }
+    else
+    {
+        // If no measurements are available, set the service response accordingly
+        res.success = false;
+        res.message = "No measurements available.";
+        return false;
+    }
 
-
+}
 
 
     void depthImageCallback(const sensor_msgs::ImageConstPtr& image_msg)
@@ -225,20 +236,30 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     current_cloud_ = cloud_filtered;
     cloud_pub_.publish(output);
 
-    // Apply a 90-degree rotation around the y-axis to the point cloud
-    Eigen::Affine3f transform = Eigen::Affine3f::Identity();
-    transform.rotate(Eigen::AngleAxisf(1.5708, Eigen::Vector3f::UnitY())); // 1.5708 radians = 90 degrees
-    transform.rotate(Eigen::AngleAxisf(-1.5708, Eigen::Vector3f::UnitZ())); // -1.5708 radians = -90 degrees for x-axis
-    pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::transformPointCloud(*cloud_filtered, *transformed_cloud, transform);
+    
+    // Adjust the point cloud based on the transform between camera_link and camera_link_adjusted
+
+    tf::TransformListener listener;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_adjusted(new pcl::PointCloud<pcl::PointXYZ>);
+    tf::StampedTransform transform;
+    try
+    {
+        listener.waitForTransform("camera_link", "camera_link_adjusted", ros::Time(0), ros::Duration(3.0));
+        listener.lookupTransform("camera_link", "camera_link_adjusted", ros::Time(0), transform);
+        pcl_ros::transformPointCloud(*cloud_filtered, *cloud_adjusted, transform);
+    }
+    catch (tf::TransformException& ex)
+    {
+        ROS_ERROR("Transform error: %s", ex.what());
+        return;
+    }
 
     sensor_msgs::PointCloud2 adjusted_output;
-    pcl::toROSMsg(*transformed_cloud, adjusted_output);
+    pcl::toROSMsg(*cloud_adjusted, adjusted_output);
     adjusted_output.header = cloud_msg->header;  // Use the same header as the input cloud for consistency
-    adjusted_cloud_ = transformed_cloud;
-    adjusted_cloud_pub_.publish(adjusted_output);
-
-    // ROS_INFO("Received point cloud with %lu points, filtered to %lu points", cloud->points.size(), cloud_filtered->points.size());
+    adjusted_cloud_ = cloud_adjusted;
+    adjusted_cloud_pub_.publish(adjusted_output);  // If you have a different publisher for adjusted cloud, use that.
+    
 }
 
 
@@ -298,10 +319,16 @@ private:
     pcl::PointCloud<pcl::PointXYZ>::Ptr current_cloud_;
     pcl::PointCloud<pcl::PointXYZ>::Ptr adjusted_cloud_;
     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> measurements_;
+
+    std::vector<tf::StampedTransform> transforms_;
+
+    // std::vector<std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, tf::StampedTransform>> measurements_;
+
     std::vector<Eigen::Matrix4f> poses_;
 
     tf::TransformListener* tf_listener_;
-
+    tf::TransformListener tf_listener_capture_;
+    tf::TransformListener listener; 
  
      // Filter flags
     bool use_voxel_filter_;
