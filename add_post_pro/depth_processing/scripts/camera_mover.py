@@ -52,7 +52,7 @@ def move_camera_to_poses():
             rospy.logerr("Failed to set camera pose!")
         
         # Capture the measurement
-        capture_measurement()
+        # capture_measurement()
 
         # Wait for a while to ensure data is captured
         rospy.sleep(2)
@@ -61,7 +61,7 @@ def move_camera_to_poses():
         raw_input("Press Enter to move to the next pose...")
 
     # After scanning from all poses, align the measurements
-    align_measurements()
+    # align_measurements()
 
 if __name__ == '__main__':
     try:

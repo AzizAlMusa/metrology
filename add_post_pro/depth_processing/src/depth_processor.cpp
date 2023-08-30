@@ -18,6 +18,9 @@
 
 
 #include <pcl/registration/icp.h>
+#include <pcl/registration/ia_ransac.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/fpfh.h>
 
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
@@ -25,12 +28,27 @@
 
 #include <pcl_ros/transforms.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <depth_processing/FiltersConfig.h>
+
+#include <pcl/visualization/pcl_visualizer.h>
+
+#include <thread>
+#include <chrono>
+
+
 
 class DepthProcessor
 {
 public:
+     
       DepthProcessor() : nh_("~")
-    {
+    {   
+
+
+        
+
+
         cloud_sub_ = nh_.subscribe("/robot/depth_camera/points", 1, &DepthProcessor::pointCloudCallback, this);
         depth_image_sub_ = nh_.subscribe("/robot/depth_camera/image_raw", 1, &DepthProcessor::depthImageCallback, this);
 
@@ -38,6 +56,8 @@ public:
         adjusted_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("adjusted_cloud", 1);
         retrieved_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("retrieved_cloud", 1);
         combined_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("combined_cloud", 1);
+        aligned_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("aligned_cloud", 1);
+        reference_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("reference_cloud", 1);
 
         capture_service_ = nh_.advertiseService("capture_measurement", &DepthProcessor::captureMeasurement, this);
         retrieve_service_ = nh_.advertiseService("get_measurement", &DepthProcessor::getMeasurement, this);
@@ -50,12 +70,28 @@ public:
         nh_.param("use_voxel_filter", use_voxel_filter_, true);
         nh_.param("use_sor_filter", use_sor_filter_, true);
         nh_.param("use_passthrough_filter", use_passthrough_filter_, true);
-
-
+        nh_.param("use_sac_registration", use_sac_registration_, true);
+        
         tf_listener_ = new tf::TransformListener();
 
 
-    }
+        f_ = boost::bind(&DepthProcessor::dynamicReconfigCallback, this, _1, _2);
+        server_.setCallback(f_);
+
+        surface_cloud = createSurfaceBoxPointCloud(x_size, y_size, z_size, resolution);
+
+       
+         // Initialize viewer
+        viewer = pcl::visualization::PCLVisualizer::Ptr(new pcl::visualization::PCLVisualizer("3D Viewer"));
+        viewer->setBackgroundColor(0, 0, 0);
+        viewer->addCoordinateSystem(1.0);  // The parameter specifies the size of the axes
+
+        // Run the viewer on a separate thread
+        // std::thread viewerThread(&DepthProcessor::runViewer, this);
+        // viewerThread.detach();
+
+
+    }   
     /**
      * @brief Service callback to capture the current point cloud measurement.
      * 
@@ -197,15 +233,16 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*cloud_msg, *cloud);
-
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
     
+
+
     // Voxel Grid Filter
     if (use_voxel_filter_)
     {
         pcl::VoxelGrid<pcl::PointXYZ> voxel_filter;
         voxel_filter.setInputCloud(cloud);
-        voxel_filter.setLeafSize(0.01f, 0.01f, 0.01f);
+        voxel_filter.setLeafSize(voxel_filter_leaf_size_, voxel_filter_leaf_size_, voxel_filter_leaf_size_);
         voxel_filter.filter(*cloud_filtered);
     }
 
@@ -214,8 +251,8 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     {
         pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor_filter;
         sor_filter.setInputCloud(cloud_filtered);
-        sor_filter.setMeanK(50);
-        sor_filter.setStddevMulThresh(1.0);
+        sor_filter.setMeanK(sor_mean_k_);
+        sor_filter.setStddevMulThresh(sor_std_dev_);
         sor_filter.filter(*cloud_filtered);
     }
 
@@ -225,7 +262,7 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
         pcl::PassThrough<pcl::PointXYZ> pass;
         pass.setInputCloud(cloud_filtered);
         pass.setFilterFieldName("z");
-        pass.setFilterLimits(0.0, 2.0);
+        pass.setFilterLimits(passthrough_limit_min_, passthrough_limit_max_);
         pass.filter(*cloud_filtered);
     }
 
@@ -263,39 +300,214 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
 }
 
 
-
 bool alignPointClouds(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
 {
-    if (measurements_.size() < 2)
+    // Convert the PCL point cloud to ROS message
+    sensor_msgs::PointCloud2 ros_msg;
+    pcl::toROSMsg(*surface_cloud, ros_msg);
+    
+    // Set the frame_id to "world"
+    ros_msg.header.frame_id = "world";
+
+    reference_cloud_pub_.publish(ros_msg);
+
+    if (measurements_.empty())
     {
         res.success = false;
-        res.message = "Not  enough point clouds for alignment.";
-        return true;
+        res.message = "No measurements available.";
+        return false;
     }
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr combined_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-
-    // Assuming the first point cloud as reference
-    *combined_cloud += *measurements_[0];
-
-    for (size_t i = 1; i < measurements_.size(); i++)
+    if (measurements_.size() != transforms_.size())
     {
-        pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
-        icp.setInputSource(measurements_[i]);
-        icp.setInputTarget(combined_cloud);
-        pcl::PointCloud<pcl::PointXYZ> aligned_cloud;
-        icp.align(aligned_cloud, poses_[i]);  // Using the stored pose for initial guess
-        *combined_cloud += aligned_cloud;
+        ROS_ERROR("Mismatch in sizes between measurements and transforms. Cannot proceed.");
+        res.success = false;
+        res.message = "Internal error: Mismatch in sizes.";
+        return false;
     }
 
-    // Store the combined cloud
-    current_cloud_ = combined_cloud;
+    // Register keyboard callback for your viewer
+    viewer->registerKeyboardCallback(&DepthProcessor::keyboardEventOccurred, *this);
+
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr final_registered_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+    // Initialization of ICP and its parameters
+    pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+
+    icp.setMaximumIterations(200);
+
+    // This extremely important for good quality registrations. The nature of the problem means measurements are not that far off.
+    // a 2 cm correspondence should be generous and avoids misaligned registrations.
+    icp.setMaxCorrespondenceDistance(0.02); 
+
+    icp.setTransformationEpsilon(1e-8);
+
+    viewer->addPointCloud<pcl::PointXYZ>(surface_cloud, "surface_cloud");
+            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.5, 0.5, 1.0, "surface_cloud");  // Light Blue: R=0.5, G=0.5, B=1.0
+    // register each cloud in measurements_
+    for (size_t i = 0; i < measurements_.size(); ++i)
+    {   
+        // Transform clouds from sensor frame to world frame through transforms_
+        pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+        pcl_ros::transformPointCloud(*measurements_[i], *transformed_cloud, transforms_[i]);
+
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr registered_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+ 
+
+        Eigen::Matrix4f initial_transform_eigen;
+        pcl_ros::transformAsMatrix(transforms_[i], initial_transform_eigen);
+
+        // 
+        icp.setInputSource(transformed_cloud);
+        icp.setInputTarget(surface_cloud);
+        icp.align(*registered_cloud);
+
+        if (icp.hasConverged())
+        {
+            // Add the aligned point cloud to the final cloud
+            *final_registered_cloud += *registered_cloud;
+
+            // Update the viewer
+            // viewer->removeAllPointClouds();
+            viewer->removePointCloud("registered_cloud");
+            viewer->removePointCloud("transformed_cloud");
+
+            viewer->addPointCloud<pcl::PointXYZ>(registered_cloud, "registered_cloud");
+            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.5, 0, 0.5, "registered_cloud");  // Light Blue: R=0.5, G=0.5, B=1.0
+
+            
+            viewer->addPointCloud<pcl::PointXYZ>(transformed_cloud, "transformed_cloud");
+            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, "transformed_cloud");  // Purple: R=0.5, G=0, B=0.5
+   
+
+            viewer->spinOnce(5000);
+
+            viewer->removePointCloud("registered_cloud");
+            viewer->removePointCloud("transformed_cloud");
+  
+
+        }
+        else
+
+        {
+            ROS_WARN("ICP failed to converge for measurement %zu.", i);
+        }
+
+
+    }
+
+    viewer->addPointCloud<pcl::PointXYZ>(final_registered_cloud, "fina_registered_cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, "fina_registered_cloud");  // Purple: R=0.5, G=0, B=0.5
+   
+
+    viewer->spinOnce(10000);
+
+    // Publishing the combined registered cloud
+    sensor_msgs::PointCloud2 output;
+    pcl::toROSMsg(*final_registered_cloud, output);
+    output.header.frame_id = "world";
+    aligned_cloud_pub_.publish(output);
 
     res.success = true;
-    res.message = "Point clouds aligned successfully.";
+    res.message = "Aligned and published the combined measurements.";
     return true;
+
+
 }
 
+
+
+
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr createSurfaceBoxPointCloud(float x_size, float y_size, float z_size, float resolution)
+{
+
+
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
+
+    // Loop through the dimensions of the box to create surface points.
+    for (float x = -x_size/2; x <= x_size/2; x += resolution)
+    {
+        for (float y = -y_size/2; y <= y_size/2; y += resolution)
+        {
+            cloud->points.push_back(pcl::PointXYZ(x, y, -z_size/2 + 0.25));  // Bottom face
+            cloud->points.push_back(pcl::PointXYZ(x, y, z_size/2 + 0.25));   // Top face
+        }
+    }
+
+    for (float x = -x_size/2; x <= x_size/2; x += resolution)
+    {
+        for (float z = -z_size/2; z <= z_size/2; z += resolution)
+        {
+            cloud->points.push_back(pcl::PointXYZ(x, -y_size/2, z + 0.25));  // Front face
+            cloud->points.push_back(pcl::PointXYZ(x, y_size/2, z + 0.25));   // Back face
+        }
+    }
+
+    for (float y = -y_size/2; y <= y_size/2; y += resolution)
+    {
+        for (float z = -z_size/2; z <= z_size/2; z += resolution)
+        {
+            cloud->points.push_back(pcl::PointXYZ(-x_size/2, y, z + 0.25));  // Left face
+            cloud->points.push_back(pcl::PointXYZ(x_size/2, y, z + 0.25));   // Right face
+        }
+    }
+
+    cloud->width = cloud->points.size();
+    cloud->height = 1;
+    cloud->is_dense = true;
+
+ 
+
+    
+    return cloud;
+}
+
+
+
+    void dynamicReconfigCallback(depth_processing::FiltersConfig &config, uint32_t level) {
+    voxel_filter_leaf_size_ = config.voxel_leaf_size;
+    sor_mean_k_ = config.mean_k;        
+    sor_std_dev_ = config.std_dev;       
+    passthrough_limit_min_ = config.passthrough_limit_min;
+    passthrough_limit_max_ = config.passthrough_limit_max;
+
+    max_iterations_ = config.max_iterations;
+    max_correspondence_distance_ = config.max_correspondence_distance;
+    transformation_epsilon_ = config.transformation_epsilon;
+    euclidean_fitness_epsilon_ = config.euclidean_fitness_epsilon;
+    ransac_outlier_rejection_threshold_ = config.ransac_outlier_rejection_threshold;
+    use_reciprocal_correspondences_ = config.use_reciprocal_correspondences;
+
+   
+}
+
+// This is meant to run the viewer at a separate thread
+// TODO investigate possibility of running this on a separate thread
+void runViewer()
+{
+
+    viewer->registerKeyboardCallback(&DepthProcessor::keyboardEventOccurred, *this);
+    while (!viewer->wasStopped())
+    {
+        viewer->spinOnce(100);
+       
+    }
+}
+
+// This captures keyboard events for the PCL visualizer.
+void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event, void* nothing)
+{
+    ROS_INFO("key pressed on visualization window");
+
+    if (event.getKeySym() == "q" && event.keyDown())
+    {
+        close_viewer = true;
+    }
+}
 
 
 
@@ -309,6 +521,8 @@ private:
     ros::Publisher adjusted_cloud_pub_;
     ros::Publisher retrieved_cloud_pub_;
     ros::Publisher combined_cloud_pub_;
+    ros::Publisher aligned_cloud_pub_;
+    ros::Publisher reference_cloud_pub_;
 
     ros::ServiceServer capture_service_;
     ros::ServiceServer retrieve_service_;
@@ -334,6 +548,38 @@ private:
     bool use_voxel_filter_;
     bool use_sor_filter_;
     bool use_passthrough_filter_;
+    bool use_sac_registration_;
+
+
+    //GUI controls
+    dynamic_reconfigure::Server<depth_processing::FiltersConfig> server_;
+    dynamic_reconfigure::Server<depth_processing::FiltersConfig>::CallbackType f_;
+
+    double voxel_filter_leaf_size_;
+    int sor_mean_k_;
+    double sor_std_dev_;
+    double passthrough_limit_min_;
+    double passthrough_limit_max_;
+
+    int max_iterations_;
+    double max_correspondence_distance_;
+    double transformation_epsilon_;
+    double euclidean_fitness_epsilon_;
+    double ransac_outlier_rejection_threshold_;
+    bool use_reciprocal_correspondences_;
+
+    //FOR TESTING PURPOSES ONLY. MUST REMOVE
+    float x_size = 0.5;
+    float y_size = 0.5;
+    float z_size = 0.5;
+    float resolution = 0.01;
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr surface_cloud;
+    pcl::visualization::PCLVisualizer::Ptr viewer;
+    bool close_viewer = false;
+
+
+
 };
 
 int main(int argc, char** argv)

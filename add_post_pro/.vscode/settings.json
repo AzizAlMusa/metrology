@@ -8,6 +8,8 @@
         "/opt/ros/melodic/lib/python2.7/dist-packages"
     ],
     "files.associations": {
-        "system_error": "cpp"
+        "system_error": "cpp",
+        "new": "cpp",
+        "chrono": "cpp"
     }
 }

@@ -13,7 +13,14 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   message_generation
+  dynamic_reconfigure
 )
+
+
+find_package(PCL 1.8 REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -60,6 +67,7 @@ add_service_files(
   FILES
   CaptureMeasurement.srv
   GetMeasurement.srv
+  PublishAllMeasurements.srv
   AlignPointClouds.srv
 )
 
@@ -91,10 +99,11 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
+generate_dynamic_reconfigure_options(
+    cfg/Filters.cfg
 #   cfg/DynReconf1.cfg
 #   cfg/DynReconf2.cfg
-# )
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -108,7 +117,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   # LIBRARIES depth_processing  # Uncomment this if you have a library named depth_processing
-  CATKIN_DEPENDS pcl_conversions pcl_ros sensor_msgs message_runtime roscpp
+  CATKIN_DEPENDS pcl_conversions pcl_ros sensor_msgs message_runtime roscpp 
   # DEPENDS system_lib  # Uncomment and specify if you have system dependencies
 )
 
@@ -120,8 +129,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
+  # ${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake
 )
 
 ## Declare a C++ library
@@ -153,6 +163,9 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+# add_dependencies(depth_processor ${PROJECT_NAME}_gencfg)
+
+
 
 #############
 ## Install ##
@@ -189,6 +202,8 @@ include_directories(
 #   PATTERN ".svn" EXCLUDE
 # )
 
+
+
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
 #   # myfile1
@@ -213,3 +228,5 @@ include_directories(
 
 add_executable(depth_processor src/depth_processor.cpp)
 target_link_libraries(depth_processor ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+add_dependencies(depth_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(depth_processor ${PROJECT_NAME}_gencfg)

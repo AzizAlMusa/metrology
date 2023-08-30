@@ -40,6 +40,7 @@
         <param name="use_voxel_filter" value="true"/>
         <param name="use_sor_filter" value="true"/>
         <param name="use_passthrough_filter" value="true"/>
+        <param name="use_sac_registration" value="false"/>
     </node>
 
     <!-- Start the camera mover Python script -->
@@ -55,6 +56,6 @@
     <!-- Launch Rviz-->
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find depth_processing)/config/config.rviz" />
 
-
+    <node pkg="depth_processing" type="depth_service_gui.py" name="depth_gui" output="screen" />
 
 </launch>
