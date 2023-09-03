@@ -56,6 +56,7 @@
     <!-- Launch Rviz-->
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find depth_processing)/config/config.rviz" />
 
+    <!-- this is the gui for running various services of the depth_processing package -->
     <node pkg="depth_processing" type="depth_service_gui.py" name="depth_gui" output="screen" />
 
 </launch>

@@ -3,7 +3,7 @@
 import Tkinter as tk
 import rospy
 from std_srvs.srv import Empty  # Replace with the service type you're using
-from depth_processing.srv import CaptureMeasurement, GetMeasurement, AlignPointClouds, PublishAllMeasurements
+from depth_processing.srv import CaptureMeasurement, GetMeasurement, AlignPointClouds, PublishAllMeasurements, GetIntersectionCloud, GenerateMesh, DeviationHeatmap, LoadMesh
 # Initialize ROS node
 rospy.init_node('depth_gui')
 
@@ -23,6 +23,10 @@ def call_service(service_name, service_type):
 root = tk.Tk()
 root.title("ROS Service GUI")
 
+button0 = tk.Button(root, text="Load Reference", command=lambda: call_service('/depth_processor_cpp/load_mesh', LoadMesh))
+button0.pack()
+
+
 button1 = tk.Button(root, text="Align Measurements", command=lambda: call_service('/depth_processor_cpp/align_measurements', AlignPointClouds))
 button1.pack()
 
@@ -34,6 +38,15 @@ button3.pack()
 
 button4 = tk.Button(root, text="Publish All Measurements", command=lambda: call_service('/depth_processor_cpp/publish_all_measurements', PublishAllMeasurements))
 button4.pack()
+
+button5 = tk.Button(root, text="Get Intersection", command=lambda: call_service('/depth_processor_cpp/intersect_point_clouds', GetIntersectionCloud))
+button5.pack()
+
+button6 = tk.Button(root, text="Generate Mesh", command=lambda: call_service('/depth_processor_cpp/generate_mesh', GenerateMesh))
+button6.pack()
+
+button7 = tk.Button(root, text="Get Deviation Map", command=lambda: call_service('/depth_processor_cpp/deviation_mesh', DeviationHeatmap))
+button7.pack()
 
 root.mainloop()
 

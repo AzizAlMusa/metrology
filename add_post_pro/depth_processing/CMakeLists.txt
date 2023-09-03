@@ -22,6 +22,11 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
+# find_package(VTK REQUIRED)
+# include(${VTK_USE_FILE})
+
+
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -65,10 +70,14 @@ add_definitions(${PCL_DEFINITIONS})
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
+  LoadMesh.srv
   CaptureMeasurement.srv
   GetMeasurement.srv
   PublishAllMeasurements.srv
   AlignPointClouds.srv
+  GetIntersectionCloud.srv
+  GenerateMesh.srv
+  DeviationHeatmap.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -227,6 +236,6 @@ include_directories(
 
 
 add_executable(depth_processor src/depth_processor.cpp)
-target_link_libraries(depth_processor ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(depth_processor ${catkin_LIBRARIES} ${PCL_LIBRARIES} )
 add_dependencies(depth_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(depth_processor ${PROJECT_NAME}_gencfg)

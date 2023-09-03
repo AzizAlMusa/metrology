@@ -19,6 +19,31 @@ def move_camera_to_poses():
         z = height
         yaw = angle + math.pi  # camera facing towards the cube
         poses.append((x, y, z, 0, 0, yaw))
+    
+    poses = [
+        (-0.5, -0.5, 1.0, 0, math.pi / 4, math.pi / 4),    # Top-left corner (looking towards origin)
+        (-0.5, 0.5, 1.0, 0, math.pi / 4, -math.pi / 4),   # Top-right corner (looking towards origin)
+        (0.5, 0.5, 1.0, 0, math.pi / 4, - math.pi * 3 / 4),   # Bottom-right corner (looking towards origin)
+        (0.5, -0.5, 1.0, 0, math.pi / 4, math.pi  * 3 / 4),   # Bottom-left corner (looking towards origin)
+       
+        # (-0.5, -0.5, 0.0, 0, math.pi / 4, math.pi / 4),   # Bottom-left corner (looking away from origin)
+        # (-0.5, 0.5, 0.0, 0, -math.pi / 4, math.pi / 4),  # Bottom-right corner (looking away from origin)
+        # (0.5, 0.5, 0.0, 0, -math.pi / 4, -math.pi / 4),  # Top-right corner (looking away from origin)
+        # (0.5, -0.5, 0.0, 0, math.pi / 4, -math.pi / 4),  # Top-left corner (looking away from origin)
+
+        (0.0, 0.0, 1.55, 0, math.pi / 2, 0),             # Middle of the left face (looking towards origin)
+       
+
+        (0.0, 1.55, 0.25, 0, 0, -math.pi / 2),  # Middle of the top face (looking towards origin)
+        (0.0, -1.55, 0.25, 0, 0, math.pi / 2),  # Middle of the top face (looking towards origin)
+        
+
+        (1.55, 0.0, 0.25, 0, 0, -math.pi),  # Middle of the top face (looking towards origin)
+        (-1.55, 0.0, 0.25, 0, 0, 0),  # Middle of the top face (looking towards origin)
+       
+    ]
+
+
 
     # Initialize the ROS node
     rospy.init_node('camera_mover')
@@ -52,7 +77,7 @@ def move_camera_to_poses():
             rospy.logerr("Failed to set camera pose!")
         
         # Capture the measurement
-        # capture_measurement()
+        capture_measurement()
 
         # Wait for a while to ensure data is captured
         rospy.sleep(2)
@@ -61,11 +86,12 @@ def move_camera_to_poses():
         raw_input("Press Enter to move to the next pose...")
 
     # After scanning from all poses, align the measurements
+    rospy.loginfo("Data measurement complete!")
     # align_measurements()
 
 if __name__ == '__main__':
     try:
-        rospy.sleep(5)  # Wait for 5 seconds to ensure everything is loaded in Gazebo
+        rospy.sleep(10)  # Wait for 5 seconds to ensure everything is loaded in Gazebo
 
         move_camera_to_poses()
     except rospy.ROSInterruptException:

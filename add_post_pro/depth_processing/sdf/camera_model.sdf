@@ -46,7 +46,7 @@
           </image>
           <clip>
             <near>0.2</near>
-            <far>1.24</far>
+            <far>2</far>
           </clip>
         </camera>
         <plugin name="depth_camera_controller" filename="libgazebo_ros_depth_camera.so">
@@ -74,7 +74,7 @@
             </image>
             <clip>
                 <near>0.2</near>
-                <far>1.24</far>
+                <far>2</far>
             </clip>
             </camera>
             <visualize>true</visualize>
