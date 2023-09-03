@@ -198,8 +198,8 @@ public:
             // viewer->addPointCloud<pcl::PointXYZ>(nominal_cloud, "nominal_cloud");
             // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, "nominal_cloud");  // Purple: R=0.5, G=0, B=0.5
 
-    
-            viewer->spinOnce(10000);
+            // viewer->spinOnce(10000);
+
             res.success = true;
             res.message = "Successfully loaded STL file.";
             return true;
@@ -673,13 +673,13 @@ bool visualizeDeviationHeatmap(std_srvs::Trigger::Request &req, std_srvs::Trigge
 
     // Create a KD-tree for nominal_cloud
     pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
-    kdtree.setInputCloud(nominal_cloud);
+    kdtree.setInputCloud(intersection_cloud_);
     
     vtkSmartPointer<vtkFloatArray> deviations = vtkSmartPointer<vtkFloatArray>::New();
     deviations->SetName("Deviations");
 
     // Calculate deviations
-    for (const auto& point : intersection_cloud_->points) {
+    for (const auto& point : nominal_cloud->points) {
         std::vector<int> nearest_indices(1);
         std::vector<float> nearest_distances(1);
         if (kdtree.nearestKSearch(point, 1, nearest_indices, nearest_distances) > 0) {
@@ -687,11 +687,11 @@ bool visualizeDeviationHeatmap(std_srvs::Trigger::Request &req, std_srvs::Trigge
             float deviation = std::sqrt(nearest_distances[0]);
 
             // Debugging: Print information to validate calculations
-            std::cout << "Point from intersection_cloud_: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
-            pcl::PointXYZ nearest_point = nominal_cloud->points[nearest_indices[0]];
-            std::cout << "Nearest point from nominal_cloud: (" << nearest_point.x << ", " << nearest_point.y << ", " << nearest_point.z << ")" << std::endl;
-            std::cout << "Squared distance: " << nearest_distances[0] << std::endl;
-            std::cout << "Deviation (sqrt of distance): " << deviation << std::endl;
+            // std::cout << "Point from intersection_cloud_: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
+            // pcl::PointXYZ nearest_point = nominal_cloud->points[nearest_indices[0]];
+            // std::cout << "Nearest point from nominal_cloud: (" << nearest_point.x << ", " << nearest_point.y << ", " << nearest_point.z << ")" << std::endl;
+            // std::cout << "Squared distance: " << nearest_distances[0] << std::endl;
+            // std::cout << "Deviation (sqrt of distance): " << deviation << std::endl;
 
       
             deviations->InsertNextValue(deviation);
@@ -715,8 +715,8 @@ bool visualizeDeviationHeatmap(std_srvs::Trigger::Request &req, std_srvs::Trigge
     double range[2];
     polydata->GetPointData()->GetScalars()->GetRange(range);
     
-    double range_min = range[0] * 1;
-    double range_max = range[1] * 1;
+    double range_min = 0.0005;
+    double range_max = 0.01;
     // Create the lookup table and populate it
     vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
     lut->SetRange(range_min, range_max); 
