@@ -29,9 +29,11 @@
 #include <pcl/surface/gp3.h>
 #include <pcl/surface/poisson.h>
 #include <pcl/io/ply_io.h>
+#include <pcl/io/vtk_lib_io.h>
 
 #include <pcl/io/vtk_io.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/features/normal_3d.h>
 
 
 #include <vtkPolyDataMapper.h>
@@ -47,6 +49,7 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkCamera.h>
 #include <vtkSTLReader.h>
+#include <vtkCellLocator.h>
 
 
 #include <tf/transform_listener.h>
@@ -73,7 +76,7 @@ public:
     {   
 
         std::string package_path = ros::package::getPath("depth_processing");
-        stl_file_path = package_path + "/saved_models/resampled_cube.stl";
+        nominal_model_path = package_path + "/saved_models/resampled_cube.stl";
         // Subscribers
         cloud_sub_ = nh_.subscribe("/robot/depth_camera/points", 1, &DepthProcessor::pointCloudCallback, this);
         depth_image_sub_ = nh_.subscribe("/robot/depth_camera/image_raw", 1, &DepthProcessor::depthImageCallback, this);
@@ -95,7 +98,7 @@ public:
         publish_all_service_ = nh_.advertiseService("publish_all_measurements", &DepthProcessor::publishAllMeasurements, this);
         intersect_service_ = nh_.advertiseService("intersect_point_clouds", &DepthProcessor::intersectPointClouds, this);
         mesh_service_ = nh_.advertiseService("generate_mesh", &DepthProcessor::generateMesh, this);
-        deviation_service_ = nh_.advertiseService("deviation_mesh", &DepthProcessor::visualizeDeviationHeatmap, this);
+        deviation_service_ = nh_.advertiseService("deviation_mesh", &DepthProcessor::visualizeDeviationHeatmap2, this);
 
         // Load launch file parameters
         nh_.param("use_voxel_filter", use_voxel_filter_, true);
@@ -128,87 +131,107 @@ public:
     }  
 
     bool loadReferenceMesh(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
-    {
-       // Initialize nominal_cloud if it hasn't been initialized yet
-        if (!nominal_cloud) {
-            nominal_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>());
-            ROS_INFO("Point cloud object initialized.");
-        }
-
-        vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
-
-        // Make sure the file path is correct
-        if (stl_file_path.empty()) {
-            res.success = false;
-            res.message = "STL file path is empty.";
-            return false;
-        }
-
-        reader->SetFileName(stl_file_path.c_str());
-        ROS_INFO("Reading STL file from path: %s", stl_file_path.c_str());
-
-        vtkSmartPointer<vtkPolyData> polydata = reader->GetOutput();
-        reader->Update();
-
-        // Fill in cloud data
-        for (vtkIdType i = 0; i < polydata->GetNumberOfPoints(); i++)
-        {
-            double p[3];
-            polydata->GetPoint(i, p);
-
-            pcl::PointXYZ point;
-            point.x = p[0];
-            point.y = p[1];
-            point.z = p[2] + 0.25;
-
-            nominal_cloud->points.push_back(point);
-        }
-
-        nominal_cloud->width = nominal_cloud->points.size();
-        nominal_cloud->height = 1;
-        nominal_cloud->is_dense = true;
-
-        // Populate the nominal_mesh cloud field
-        pcl::toPCLPointCloud2(*nominal_cloud, nominal_mesh.cloud);
-
-        // Populate the nominal_mesh polygons field
-        for (vtkIdType i = 0; i < polydata->GetNumberOfCells(); i++)
-        {
-            vtkCell* cell = polydata->GetCell(i);
-            pcl::Vertices vertices;
-
-            for (vtkIdType j = 0; j < cell->GetNumberOfPoints(); j++)
-            {
-                vertices.vertices.push_back(cell->GetPointId(j));
-            }
-
-            nominal_mesh.polygons.push_back(vertices);
-        }
-
-        if (nominal_mesh.polygons.size() == 0)
-        {
-
-            res.success = false;
-            res.message = "Failed to load STL file.";
-            return false;
-        }
-        else
-        {
-      
-            // viewer->addPointCloud<pcl::PointXYZ>(nominal_cloud, "nominal_cloud");
-            // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, "nominal_cloud");  // Purple: R=0.5, G=0, B=0.5
-
-            // viewer->spinOnce(10000);
-
-            res.success = true;
-            res.message = "Successfully loaded STL file.";
-            return true;
-        }
-
-      
+{
+    // Initialize nominal_cloud_basic if it hasn't been initialized yet
+    if (!nominal_cloud_basic) {
+        nominal_cloud_basic.reset(new pcl::PointCloud<pcl::PointXYZ>());
+        ROS_INFO("Point cloud without normals object initialized.");
+    }
+    
+    // Initialize nominal_cloud for normals
+    if (!nominal_cloud) {
+        nominal_cloud.reset(new pcl::PointCloud<pcl::PointNormal>());
+        ROS_INFO("Point cloud with normals object initialized.");
     }
 
+    vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
 
+    // Make sure the file path is correct
+    if (nominal_model_path.empty()) {
+        res.success = false;
+        res.message = "STL file path is empty.";
+        return false;
+    }
+
+    reader->SetFileName(nominal_model_path.c_str());
+    ROS_INFO("Reading STL file from path: %s", nominal_model_path.c_str());
+
+    vtkSmartPointer<vtkPolyData> polydata = reader->GetOutput();
+    reader->Update();
+
+    // Fill in nominal_cloud_basic data
+    for (vtkIdType i = 0; i < polydata->GetNumberOfPoints(); i++) {
+        double p[3];
+        polydata->GetPoint(i, p);
+
+        pcl::PointXYZ point;
+        point.x = p[0];
+        point.y = p[1];
+        point.z = p[2] + 0.25;
+
+        nominal_cloud_basic->points.push_back(point);
+    }
+
+    // Compute normals
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::PointNormal> ne;
+    ne.setInputCloud(nominal_cloud_basic);
+    
+    // Create an empty kdtree representation and pass it to the normal estimation object.
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
+    ne.setSearchMethod(tree);
+    
+    // Output datasets
+    ne.setKSearch(50);  // Set the number of points to use for each normal estimation.
+    ne.compute(*nominal_cloud);
+
+    // Combine the data
+    pcl::concatenateFields(*nominal_cloud_basic, *nominal_cloud, *nominal_cloud);
+
+    nominal_cloud_basic->width = nominal_cloud_basic->points.size();
+    nominal_cloud_basic->height = 1;
+    nominal_cloud_basic->is_dense = true;
+
+    nominal_cloud->width = nominal_cloud->points.size();
+    nominal_cloud->height = 1;
+    nominal_cloud->is_dense = true;
+
+    // Populate the nominal_mesh cloud field
+    pcl::toPCLPointCloud2(*nominal_cloud, nominal_mesh.cloud);
+
+    // Populate the nominal_mesh polygons field
+    for (vtkIdType i = 0; i < polydata->GetNumberOfCells(); i++)
+    {
+        vtkCell* cell = polydata->GetCell(i);
+        pcl::Vertices vertices;
+
+        for (vtkIdType j = 0; j < cell->GetNumberOfPoints(); j++)
+        {
+            vertices.vertices.push_back(cell->GetPointId(j));
+        }
+
+        nominal_mesh.polygons.push_back(vertices);
+    }
+
+    if (nominal_mesh.polygons.size() == 0)
+    {
+        res.success = false;
+        res.message = "Failed to load STL file.";
+        return false;
+    }
+    else
+    {   
+        viewer->addPointCloud<pcl::PointNormal>(nominal_cloud, "nominal_cloud");
+        viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 1.0, 0.0, "nominal_cloud");  // Purple: R=0.5, G=0, B=0.5
+        viewer->addPointCloudNormals<pcl::PointNormal, pcl::PointNormal>(nominal_cloud, nominal_cloud, 1, 0.05, "normals");
+
+        viewer->spinOnce(2000);
+        viewer->removeAllPointClouds();
+
+        res.success = true;
+        res.message = "Successfully loaded STL file.";
+        return true;
+    }
+}
 
 
     /**
@@ -480,7 +503,7 @@ bool alignPointClouds(std_srvs::Trigger::Request &req, std_srvs::Trigger::Respon
 
         // 
         icp.setInputSource(transformed_cloud);
-        icp.setInputTarget(nominal_cloud);
+        icp.setInputTarget(nominal_cloud_basic);
         icp.align(*registered_cloud);
 
         if (icp.hasConverged())
@@ -545,7 +568,7 @@ bool intersectPointClouds(std_srvs::Trigger::Request &req, std_srvs::Trigger::Re
     pcl::PointCloud<pcl::PointXYZ>::Ptr intersection_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
     pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
-    kdtree.setInputCloud(nominal_cloud);
+    kdtree.setInputCloud(nominal_cloud_basic);
 
     std::vector<int> pointIdxRadiusSearch;
     std::vector<float> pointRadiusSquaredDistance;
@@ -564,7 +587,7 @@ bool intersectPointClouds(std_srvs::Trigger::Request &req, std_srvs::Trigger::Re
     intersection_cloud->height = 1;
     intersection_cloud->is_dense = true;
 
-    intersection_cloud_ = intersection_cloud;
+    measured_cloud_ = intersection_cloud;
     sensor_msgs::PointCloud2 intersection_msg;
     pcl::toROSMsg(*intersection_cloud, intersection_msg);
     intersection_msg.header.frame_id = "world";
@@ -591,12 +614,12 @@ bool generateMesh(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
     norm_est.setSearchMethod(tree);
     norm_est.setKSearch(normal_estimation_k_search_);
-    norm_est.setInputCloud(nominal_cloud);
+    norm_est.setInputCloud(nominal_cloud_basic);
     norm_est.compute(*normals);
 
     // Concatenate XYZ and normal fields
     pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
-    pcl::concatenateFields(*nominal_cloud, *normals, *cloud_with_normals);
+    pcl::concatenateFields(*nominal_cloud_basic, *normals, *cloud_with_normals);
 
     // Initialize Poisson reconstruction object
     pcl::Poisson<pcl::PointNormal> poisson;
@@ -665,33 +688,22 @@ vtkSmartPointer<vtkPolyData> convertToVtkPolyData(const pcl::PolygonMesh& pcl_me
 
 bool visualizeDeviationHeatmap(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
     
-    // viewer->addPointCloud(intersection_cloud_, "intersection_cloud");
-    // viewer->addPointCloud(surface_cloud, "surface_cloud");
-
-    // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0.0, "intersection_cloud"); 
-    // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.0, 1.0, "surface_cloud"); 
 
     // Create a KD-tree for nominal_cloud
     pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
-    kdtree.setInputCloud(intersection_cloud_);
+    kdtree.setInputCloud(measured_cloud_);
     
     vtkSmartPointer<vtkFloatArray> deviations = vtkSmartPointer<vtkFloatArray>::New();
     deviations->SetName("Deviations");
 
     // Calculate deviations
-    for (const auto& point : nominal_cloud->points) {
+    for (const auto& point : nominal_cloud_basic->points) {
         std::vector<int> nearest_indices(1);
         std::vector<float> nearest_distances(1);
         if (kdtree.nearestKSearch(point, 1, nearest_indices, nearest_distances) > 0) {
 
             float deviation = std::sqrt(nearest_distances[0]);
 
-            // Debugging: Print information to validate calculations
-            // std::cout << "Point from intersection_cloud_: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
-            // pcl::PointXYZ nearest_point = nominal_cloud->points[nearest_indices[0]];
-            // std::cout << "Nearest point from nominal_cloud: (" << nearest_point.x << ", " << nearest_point.y << ", " << nearest_point.z << ")" << std::endl;
-            // std::cout << "Squared distance: " << nearest_distances[0] << std::endl;
-            // std::cout << "Deviation (sqrt of distance): " << deviation << std::endl;
 
       
             deviations->InsertNextValue(deviation);
@@ -703,7 +715,6 @@ bool visualizeDeviationHeatmap(std_srvs::Trigger::Request &req, std_srvs::Trigge
         }
 
     }
-
 
     vtkSmartPointer<vtkPolyData> polydata = convertToVtkPolyData(nominal_mesh);
     polydata->GetPointData()->SetScalars(deviations);
@@ -789,6 +800,263 @@ bool visualizeDeviationHeatmap(std_srvs::Trigger::Request &req, std_srvs::Trigge
 
 
 }
+
+
+///////////////////////////////////////////////////
+vtkSmartPointer<vtkPolyData> convertPCLPolygonMeshToVtk(const pcl::PolygonMesh& pcl_mesh) {
+    vtkSmartPointer<vtkPolyData> vtk_mesh = vtkSmartPointer<vtkPolyData>::New();
+    vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkCellArray> polys = vtkSmartPointer<vtkCellArray>::New();
+
+    // Convert vertices
+    pcl::PointCloud<pcl::PointXYZ> cloud;
+    pcl::fromPCLPointCloud2(pcl_mesh.cloud, cloud);
+    for (const auto& point : cloud.points) {
+        points->InsertNextPoint(point.x, point.y, point.z);
+    }
+
+    // Convert polygons
+    for (const auto& polygon : pcl_mesh.polygons) {
+        polys->InsertNextCell(polygon.vertices.size());
+        for (const auto& index : polygon.vertices) {
+            polys->InsertCellPoint(index);
+        }
+    }
+
+    vtk_mesh->SetPoints(points);
+    vtk_mesh->SetPolys(polys);
+
+    return vtk_mesh;
+}
+
+// Eigen::Vector3f rayMeshIntersection(const Eigen::Vector3f& ray_origin, const Eigen::Vector3f& ray_direction, vtkSmartPointer<vtkPolyData> mesh) {
+//     vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
+//     cellLocator->SetDataSet(mesh);
+//     cellLocator->BuildLocator();
+
+//     double origin[3] = {ray_origin[0], ray_origin[1], ray_origin[2]};
+//     double direction[3] = {ray_direction[0], ray_direction[1], ray_direction[2]};
+
+//     double t; // the intersection point within the cell (0.0 to 1.0)
+//     double x[3]; // The actual intersection point
+//     double pcoords[3];
+//     int subId;
+
+//     vtkSmartPointer<vtkIdList> cellIds = vtkSmartPointer<vtkIdList>::New();
+//     cellLocator->FindCellsAlongLine(origin, direction, 0.0001, cellIds);
+
+//     if (cellIds->GetNumberOfIds() == 0) {
+//         // No intersection. Return some default value or handle this case as needed.
+//         return Eigen::Vector3f(0, 0, 0);
+//     }
+
+//     // Just taking the first intersecting cell for this example
+//     vtkIdType cellId = cellIds->GetId(0);
+//     vtkCell* cell = mesh->GetCell(cellId);
+//     cell->IntersectWithLine(origin, direction, 0.0001, t, x, pcoords, subId);
+
+//     return Eigen::Vector3f(x[0], x[1], x[2]);
+// }
+
+Eigen::Vector3f rayMeshIntersection(const Eigen::Vector3f& ray_origin, 
+                                    const Eigen::Vector3f& ray_direction,
+                                    vtkSmartPointer<vtkPolyData> mesh) {
+    vtkSmartPointer<vtkCellLocator> cellLocator = vtkSmartPointer<vtkCellLocator>::New();
+    cellLocator->SetDataSet(mesh);
+    cellLocator->BuildLocator();
+
+    double origin[3] = {ray_origin[0], ray_origin[1], ray_origin[2]};
+    double direction[3] = {ray_direction[0], ray_direction[1], ray_direction[2]};
+    double opp_direction[3] = {-ray_direction[0], -ray_direction[1], -ray_direction[2]};
+
+    double t1, t2;
+    double x1[3], x2[3];
+    double pcoords[3];
+    int subId;
+
+    vtkSmartPointer<vtkIdList> cellIds1 = vtkSmartPointer<vtkIdList>::New();
+    vtkSmartPointer<vtkIdList> cellIds2 = vtkSmartPointer<vtkIdList>::New();
+
+    // For original direction
+    cellLocator->FindCellsAlongLine(origin, direction, 0.0001, cellIds1);
+
+    // For opposite direction
+    cellLocator->FindCellsAlongLine(origin, opp_direction, 0.0001, cellIds2);
+
+    if (cellIds1->GetNumberOfIds() > 0) {
+        vtkIdType cellId1 = cellIds1->GetId(0);
+        vtkCell* cell1 = mesh->GetCell(cellId1);
+        cell1->IntersectWithLine(origin, direction, 0.0001, t1, x1, pcoords, subId);
+    }
+
+    if (cellIds2->GetNumberOfIds() > 0) {
+        vtkIdType cellId2 = cellIds2->GetId(0);
+        vtkCell* cell2 = mesh->GetCell(cellId2);
+        cell2->IntersectWithLine(origin, opp_direction, 0.0001, t2, x2, pcoords, subId);
+    }
+
+    // Check which intersection point is closer
+    if (t1 < t2) {
+        return Eigen::Vector3f(x1[0], x1[1], x1[2]);
+    } else {
+        return Eigen::Vector3f(x2[0], x2[1], x2[2]);
+    }
+}
+
+
+
+
+bool visualizeDeviationHeatmap2(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
+    
+
+
+    // Set up k-d tree for nominal_cloud
+    pcl::KdTreeFLANN<pcl::PointNormal> kdtree_normal;
+    kdtree_normal.setInputCloud(nominal_cloud);
+
+    // Also set up a k-d tree for nominal_cloud_basic (if you need it)
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree_xyz;
+    kdtree_xyz.setInputCloud(nominal_cloud_basic);
+
+    // Other initializations
+    vtkSmartPointer<vtkFloatArray> deviations = vtkSmartPointer<vtkFloatArray>::New();
+    deviations->SetName("Deviations");
+
+    // Loop through the MEASURED point cloud
+    for (const auto& point : measured_cloud_->points) {
+        std::vector<int> nearest_indices;
+        std::vector<float> nearest_distances;
+
+        // Find n nearest neighbors in the NOMINAL cloud
+        int n = 5;
+        kdtree_xyz.nearestKSearch(point, n, nearest_indices, nearest_distances);
+
+        // Compute average normal from nearest neighbors in NOMINAL cloud
+        Eigen::Vector3f avg_normal(0, 0, 0);
+        for (int i = 0; i < nearest_indices.size(); ++i) {
+            avg_normal += Eigen::Vector3f(
+                nominal_cloud->points[nearest_indices[i]].normal_x,
+                nominal_cloud->points[nearest_indices[i]].normal_y,
+                nominal_cloud->points[nearest_indices[i]].normal_z
+            );
+
+              // Check if points in nominal_cloud and nominal_cloud_basic match
+            bool points_match = (nominal_cloud->points[nearest_indices[i]].x == nominal_cloud_basic->points[nearest_indices[i]].x) &&
+                                (nominal_cloud->points[nearest_indices[i]].y == nominal_cloud_basic->points[nearest_indices[i]].y) &&
+                                (nominal_cloud->points[nearest_indices[i]].z == nominal_cloud_basic->points[nearest_indices[i]].z);
+
+            // If the points don't match, print a warning
+            if (!points_match) {
+                std::cout << "Warning: Points do not match at index " << nearest_indices[i] << std::endl;
+            }
+        }
+        avg_normal /= static_cast<float>(nearest_indices.size());
+
+        // Perform ray-mesh intersection to find the point q
+        Eigen::Vector3f ray_origin(point.x, point.y, point.z);
+        Eigen::Vector3f ray_direction = avg_normal.normalized();
+        Eigen::Vector3f q(0, 0, 0);  // Initialize this based on your ray-mesh intersection result
+
+        // PSEUDO-CODE: Replace this with actual ray-mesh intersection logic
+        // Assuming pcl_mesh is your pcl::PolygonMesh object
+        // vtkSmartPointer<vtkPolyData> vtk_mesh = convertPCLPolygonMeshToVtk(nominal_mesh);
+        // q = rayMeshIntersection(ray_origin, ray_direction, vtk_mesh);
+
+        // Calculate deviation
+        float deviation = (q - ray_origin).norm();
+        // std::cout << "ray origin = " << "(" <<point.x << "," << point.y << "," << point.z << ")" << "|" << "deviation = " << deviation << std::endl;
+        // Insert deviation into VTK array
+        deviations->InsertNextValue(deviation);
+    }
+
+    vtkSmartPointer<vtkPolyData> polydata = convertToVtkPolyData(nominal_mesh);  // Assume convertToVtkPolyData is defined elsewhere
+    polydata->GetPointData()->SetScalars(deviations);
+    viewer->addModelFromPolyData(polydata, "nominal_mesh");
+
+
+    // HEAT MAP COLOR FORMATTING
+    //Get the min-max of the values to be mapped
+    double range[2];
+    polydata->GetPointData()->GetScalars()->GetRange(range);
+    
+    double range_min = 0.05;
+    double range_max = 0.2;
+    // Create the lookup table and populate it
+    vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+    lut->SetRange(range_min, range_max); 
+    lut->SetHueRange(0.67, 0);  // flip the color range
+    lut->SetScaleToLinear();
+    
+    // Assuming `viewer` is of type `pcl::visualization::PCLVisualizer::Ptr`
+    viewer->getRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActiveCamera()->SetParallelProjection(1);
+  
+    // This is the tricky part, as PCLVisualizer doesn't expose the mapper directly.
+    // We're working with assumptions here. Please test if this actually works.
+    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(polydata);
+    mapper->SetLookupTable(lut);
+    mapper->ScalarVisibilityOn();
+    mapper->SetInterpolateScalarsBeforeMapping(1);
+    mapper->UseLookupTableScalarRangeOff();
+    mapper->SetScalarRange(lut->GetRange());
+    mapper->Update();
+
+    // // Here, we're setting the custom lookup table for the first actor. 
+    // // If you have more, you'll need to adjust this.
+    viewer->getRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor()->SetMapper(mapper);
+
+
+    // Create a scalar bar actor
+    vtkSmartPointer<vtkScalarBarActor> scalarBar = vtkSmartPointer<vtkScalarBarActor>::New();
+    scalarBar->SetLookupTable(lut);
+    scalarBar->SetTitle("Deviations");
+    scalarBar->SetNumberOfLabels(5);
+
+    // Modify font for the labels
+    vtkTextProperty* labelProperty = scalarBar->GetLabelTextProperty();
+    labelProperty->SetFontFamilyToCourier();
+    labelProperty->ItalicOff();
+    labelProperty->BoldOff();  
+    labelProperty->SetFontSize(2);
+
+    // Modify font for the title
+    vtkTextProperty* titleProperty = scalarBar->GetTitleTextProperty();
+    titleProperty->SetFontFamilyToCourier();
+    titleProperty->ItalicOff();
+    titleProperty->BoldOff(); 
+    titleProperty->SetFontSize(4);
+
+
+ 
+
+    scalarBar->Modified();
+
+    // Access internal VTK Renderer from PCLVisualizer
+    // NOTE: This is risky and may break in future PCL versions
+    vtkRenderer* renderer = viewer->getRenderWindow()->GetRenderers()->GetFirstRenderer();
+
+    // Add scalar bar actor to renderer
+    if (renderer) {
+        renderer->AddActor2D(scalarBar);
+    }
+
+    while (!viewer->wasStopped()) {
+        
+        viewer->spinOnce(100);
+
+    }
+
+
+    res.success = true;
+    res.message = "Heatmap generated successfully.";
+    return true;
+
+
+}
+
+
+
+
 
 
 
@@ -933,12 +1201,12 @@ private:
     std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> measurements_;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr final_registered_cloud_;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr intersection_cloud_;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr measured_cloud_;
 
     std::vector<tf::StampedTransform> transforms_;
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr nominal_cloud;
-   
+    pcl::PointCloud<pcl::PointXYZ>::Ptr nominal_cloud_basic;
+    pcl::PointCloud<pcl::PointNormal>::Ptr nominal_cloud;
 
     // std::vector<std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, tf::StampedTransform>> measurements_;
 
@@ -950,7 +1218,7 @@ private:
     pcl::PolygonMesh nominal_mesh;
     pcl::PolygonMesh scanned_mesh;
     
-    std::string stl_file_path;
+    std::string nominal_model_path;
 
 
      // Filter flags
