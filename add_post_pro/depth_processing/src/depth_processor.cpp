@@ -904,73 +904,91 @@ Eigen::Vector3f rayMeshIntersection(const Eigen::Vector3f& ray_origin,
 }
 
 
+// Function to update visualization components
+void updateVisualizationComponents(
+    vtkSmartPointer<vtkPolyDataMapper>& mapper,
+    vtkSmartPointer<vtkLookupTable>& lut,
+    vtkSmartPointer<vtkScalarBarActor>& scalarBar,
+    double colormap_min,
+    double colormap_max,
+    vtkSmartPointer<vtkPolyData> polydata
+)  {
+    // Update the lookup table
+    lut->SetRange(colormap_min, colormap_max);
+    lut->SetHueRange(0.67, 0);
+    lut->SetScaleToLinear();
+    
+    // Update the mapper
+    mapper->SetInputData(polydata);
+    mapper->SetLookupTable(lut);
+    mapper->ScalarVisibilityOn();
+    mapper->SetInterpolateScalarsBeforeMapping(1);
+    mapper->UseLookupTableScalarRangeOff();
+    mapper->SetScalarRange(lut->GetRange());
+    mapper->Update();
 
+    // Update the scalar bar
+    scalarBar->SetLookupTable(lut);
+    scalarBar->Modified();
+}
 
 bool visualizeDeviationHeatmap2(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
     
 
 
-    // Set up k-d tree for nominal_cloud
-    pcl::KdTreeFLANN<pcl::PointNormal> kdtree_normal;
-    kdtree_normal.setInputCloud(nominal_cloud);
+    // Create KD-trees for nominal_cloud_basic and scanned_cloud
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree_nominal, kdtree_scanned;
+    kdtree_nominal.setInputCloud(nominal_cloud_basic);
+    kdtree_scanned.setInputCloud(measured_cloud_);
 
-    // Also set up a k-d tree for nominal_cloud_basic (if you need it)
-    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree_xyz;
-    kdtree_xyz.setInputCloud(nominal_cloud_basic);
-
-    // Other initializations
+    // Create an array to store deviations
     vtkSmartPointer<vtkFloatArray> deviations = vtkSmartPointer<vtkFloatArray>::New();
     deviations->SetName("Deviations");
 
-    // Loop through the MEASURED point cloud
-    for (const auto& point : measured_cloud_->points) {
-        std::vector<int> nearest_indices;
-        std::vector<float> nearest_distances;
+    // Initialize counter
+    int counter = 0;
+    const int NUM_OF_NEIGHBORS = 5;
+    // Loop through each point in nominal_cloud_basic
+    for (const auto& X : nominal_cloud_basic->points) {
+      
+        // Step 1: Find nearest neighbor to nominal point X in scanned_cloud
+        std::vector<int> nearest_indices(1);
+        std::vector<float> nearest_distances(1);
 
-        // Find n nearest neighbors in the NOMINAL cloud
-        int n = 5;
-        kdtree_xyz.nearestKSearch(point, n, nearest_indices, nearest_distances);
+        if (kdtree_scanned.nearestKSearch(X, 1, nearest_indices, nearest_distances) > 0) {
+            // Step 2: Call this nearest point point_in_scanned
+            pcl::PointXYZ point_in_scanned = measured_cloud_->points[nearest_indices[0]];
 
-        // Compute average normal from nearest neighbors in NOMINAL cloud
-        Eigen::Vector3f avg_normal(0, 0, 0);
-        for (int i = 0; i < nearest_indices.size(); ++i) {
-            avg_normal += Eigen::Vector3f(
-                nominal_cloud->points[nearest_indices[i]].normal_x,
-                nominal_cloud->points[nearest_indices[i]].normal_y,
-                nominal_cloud->points[nearest_indices[i]].normal_z
-            );
+            // Step 3: Find 5 nearest neighbors of point_in_scanned on the nominal cloud
+            std::vector<int> neighbor_indices(NUM_OF_NEIGHBORS);
+            std::vector<float> neighbor_distances(NUM_OF_NEIGHBORS);
 
-              // Check if points in nominal_cloud and nominal_cloud_basic match
-            bool points_match = (nominal_cloud->points[nearest_indices[i]].x == nominal_cloud_basic->points[nearest_indices[i]].x) &&
-                                (nominal_cloud->points[nearest_indices[i]].y == nominal_cloud_basic->points[nearest_indices[i]].y) &&
-                                (nominal_cloud->points[nearest_indices[i]].z == nominal_cloud_basic->points[nearest_indices[i]].z);
+            if (kdtree_nominal.nearestKSearch(point_in_scanned, NUM_OF_NEIGHBORS, neighbor_indices, neighbor_distances) > 0) {
+                // Step 4: Calculate average normal of 5 neighbors
+                Eigen::Vector3f average_normal(0, 0, 0);
+                for (const auto& idx : neighbor_indices) {
+                    average_normal += nominal_cloud->points[idx].getNormalVector3fMap();
+                }
+                average_normal /= neighbor_indices.size();
 
-            // If the points don't match, print a warning
-            if (!points_match) {
-                std::cout << "Warning: Points do not match at index " << nearest_indices[i] << std::endl;
+                // Step 5: Project point_in_scanned onto the plane defined by average_normal and X
+                Eigen::Vector3f point_in_scanned_vec(point_in_scanned.x, point_in_scanned.y, point_in_scanned.z);
+                Eigen::Vector3f X_vec(X.x, X.y, X.z);
+                float dot_product = (point_in_scanned_vec - X_vec).dot(average_normal);
+                Eigen::Vector3f point_in_nominal = point_in_scanned_vec - dot_product * average_normal;
+
+                // Step 6 and 7: Calculate deviation
+                float deviation = (point_in_nominal - Eigen::Vector3f(point_in_scanned.x, point_in_scanned.y, point_in_scanned.z)).norm();
+                deviations->InsertNextValue(deviation);
             }
         }
-        avg_normal /= static_cast<float>(nearest_indices.size());
 
-        // Perform ray-mesh intersection to find the point q
-        Eigen::Vector3f ray_origin(point.x, point.y, point.z);
-        Eigen::Vector3f ray_direction = avg_normal.normalized();
-        Eigen::Vector3f q(0, 0, 0);  // Initialize this based on your ray-mesh intersection result
 
-        // PSEUDO-CODE: Replace this with actual ray-mesh intersection logic
-        // Assuming pcl_mesh is your pcl::PolygonMesh object
-        // vtkSmartPointer<vtkPolyData> vtk_mesh = convertPCLPolygonMeshToVtk(nominal_mesh);
-        // q = rayMeshIntersection(ray_origin, ray_direction, vtk_mesh);
-
-        // Calculate deviation
-        float deviation = (q - ray_origin).norm();
-        // std::cout << "ray origin = " << "(" <<point.x << "," << point.y << "," << point.z << ")" << "|" << "deviation = " << deviation << std::endl;
-        // Insert deviation into VTK array
-        deviations->InsertNextValue(deviation);
     }
 
     vtkSmartPointer<vtkPolyData> polydata = convertToVtkPolyData(nominal_mesh);  // Assume convertToVtkPolyData is defined elsewhere
     polydata->GetPointData()->SetScalars(deviations);
+
     viewer->addModelFromPolyData(polydata, "nominal_mesh");
 
 
@@ -979,8 +997,10 @@ bool visualizeDeviationHeatmap2(std_srvs::Trigger::Request &req, std_srvs::Trigg
     double range[2];
     polydata->GetPointData()->GetScalars()->GetRange(range);
     
-    double range_min = 0.05;
-    double range_max = 0.2;
+    // Default values, this needs to customized
+    double range_min = range[0];
+    double range_max = range[1];
+
     // Create the lookup table and populate it
     vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
     lut->SetRange(range_min, range_max); 
@@ -1041,8 +1061,20 @@ bool visualizeDeviationHeatmap2(std_srvs::Trigger::Request &req, std_srvs::Trigg
     }
 
     while (!viewer->wasStopped()) {
+        ros::spinOnce();
+        // Assuming colormap_min_ and colormap_max_ are updated dynamically
+        updateVisualizationComponents(mapper, lut, scalarBar, colormap_min_, colormap_max_, polydata);
         
+        // Update the actor
+        viewer->getRenderWindow()->GetRenderers()->GetFirstRenderer()->GetActors()->GetLastActor()->SetMapper(mapper);
+        // Explicitly flag that components are modified
+        mapper->Modified();
+        lut->Modified();
+        scalarBar->Modified();
+        // Manually trigger a render update
+        viewer->getRenderWindow()->Render();
         viewer->spinOnce(100);
+      
 
     }
 
