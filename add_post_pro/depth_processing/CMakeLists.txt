@@ -115,7 +115,7 @@ generate_dynamic_reconfigure_options(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
+  # INCLUDE_DIRS include
   # LIBRARIES depth_processing  # Uncomment this if you have a library named depth_processing
   CATKIN_DEPENDS pcl_conversions pcl_ros sensor_msgs message_runtime roscpp 
   # DEPENDS system_lib  # Uncomment and specify if you have system dependencies
@@ -230,3 +230,8 @@ add_executable(depth_processor src/depth_processor.cpp)
 target_link_libraries(depth_processor ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_dependencies(depth_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(depth_processor ${PROJECT_NAME}_gencfg)
+
+add_executable(depth_processor_realsense src/depth_processor_realsense.cpp)
+target_link_libraries(depth_processor_realsense ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+add_dependencies(depth_processor_realsense ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(depth_processor_realsense ${PROJECT_NAME}_gencfg)

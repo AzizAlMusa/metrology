@@ -22,11 +22,11 @@
 #include <pcl_sensor_data/StartRecording.h>
 #include <pcl_sensor_data/StopRecording.h>
 #include <pcl_sensor_data/RestartRecording.h>
-
+#include <pcl_conversions/pcl_conversions.h>
 
 //To save pcd file
 #include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
+
 
 #include <laser_geometry/laser_geometry.h>
 
@@ -188,7 +188,7 @@ class LaserProcessor
             // TODO: Remove this loop
             // res.success = true;
              std::ofstream file("segment1.csv");
-             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+           
 
             for (const auto& point : cumulative_pointcloud.points) {
 
@@ -198,18 +198,10 @@ class LaserProcessor
                 // Do something with the x, y, and z values
                 //...
 
-                pcl::PointXYZ vertex;
-                vertex.x = x;
-                vertex.y = y;
-                vertex.z = z;
-                cloud->push_back(vertex);
-
                 file << x << "," << y << "," << z << std::endl;
             }
 
-    
-            // save the point cloud as a PCD file
-            pcl::io::savePCDFileASCII("cloud.pcd", *cloud);
+            file.close();
 
 
 

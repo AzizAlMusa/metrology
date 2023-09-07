@@ -1,7 +1,7 @@
 <!-- This launch file will create nodes responsible for live robot manipulation -->
 <launch>
 
-    <arg name="ip_address" default="169.254.221.17" />
+    <arg name="ip_address" default="192.168.1.110" />
 
     <!-- If you want to change send and recieve format of denso_robot_control, -->
     <!-- you can specify the send_format and recv_format parameters -->
@@ -24,7 +24,7 @@
     </include> -->
 
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-        <param name="use_gui" value="false"/>
+        <param name="use_gui" value="true"/>
         <param name="publish_frequency" type="double" value="125.0" />
         <rosparam param="source_list" subst_value = "true">[/$(arg robot_name)/joint_states]</rosparam>
     </node>
@@ -73,5 +73,36 @@
     <include file="$(find add_post_pro_robot_vs050_config)/launch/move_group.launch" if="$(eval denso_robot == 'vs050')">
         <arg name="publish_monitored_planning_scene" value="true" />
     </include>
+
+
+    <!-- Run Rviz and load the default config to see the state of the move_group node -->
+    <include file="$(find add_post_pro_robot_b120_config)/launch/moveit_rviz.launch">
+        <arg name="rviz_config" value="$(find add_post_pro_robot_b120_config)/launch/moveit.rviz"/>
+        <!-- <arg name="debug" value="$(arg debug)"/> -->
+    </include> 
+
+<!-- Scan control launch-->
+    <!-- <include file="$(find micro_epsilon_scancontrol_driver)/launch/load_driver.launch"/>
+    <node name="transform_signal" pkg="laser_scanner_pkg" type="signal_transformer" respawn="true"/>
+    <node name="concatenate_pointcloud" pkg="laser_scanner_pkg" type="aggregate_laser_scans" respawn="true"/> -->
+
+    <!-- Realsense launch -->
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+        <arg name="filters" value="pointcloud" />
+        <arg name="clip_distance" value="0.5" />
+    </include>
+
+    <node name="frame_attachment_node" pkg="realsense_cam" type="pointcloud_transformer.py"/>
+
+<!-- Depth Processing -->
+
+    <node pkg="depth_processing" type="depth_processor_realsense" name="depth_processor_realsense_cpp" output="screen" >
+        <param name="use_voxel_filter" value="true"/>
+        <param name="use_sor_filter" value="true"/>
+        <param name="use_passthrough_filter" value="true"/>
+        <param name="use_sac_registration" value="false"/>
+    </node>
+
+    <node pkg="depth_processing" type="depth_service_gui.py" name="depth_gui" output="screen" />
 
 </launch>

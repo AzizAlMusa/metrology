@@ -1,0 +1,43 @@
+<Robot name="Turntable">
+
+<KinBody>
+<Mass type="mimicgeom">
+<density>100000</density>
+</Mass>
+
+<Body name="Base" type="dynamic">
+<Translation>0.75 0.0 0.16</Translation>
+<Geom type="cylinder">
+<rotationaxis>1 0 0 90</rotationaxis>
+<radius>0.02</radius>
+<height>0.32</height>
+<ambientColor>1. 0. 0.</ambientColor>
+<diffuseColor>1. 0. 0.</diffuseColor>
+</Geom>
+</Body>
+
+<Body name="Circle" type="dynamic">
+<offsetfrom>Base</offsetfrom>
+<!--  translation and rotation  will be relative to Base  -->
+<Translation>0 0 0.16</Translation>
+<Geom type="cylinder">
+<rotationaxis>1 0 0 90</rotationaxis>
+<radius>0.15</radius>
+<height>0.01</height>
+<ambientColor>1. 0. 0.</ambientColor>
+<diffuseColor>1. 0. 0.</diffuseColor>
+</Geom>
+</Body>
+
+<Joint circular="true" name="Joint0" type="hinge">
+<Body>Base</Body>
+<Body>Circle</Body>
+<offsetfrom>Circle</offsetfrom>
+<weight>4</weight>
+<axis>0 0 1</axis>
+<maxvel>3.42</maxvel>
+<resolution>1</resolution>
+</Joint>
+
+</KinBody>
+</Robot>

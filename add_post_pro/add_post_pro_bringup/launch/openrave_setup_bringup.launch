@@ -1,0 +1,10 @@
+<launch>
+	<!-- Calling the node for launching OpenRAVE -->
+	<node pkg="add_post_pro_bringup" name="openrave_launch" type="openrave_environment_setup.py" output="screen"></node>
+	<node pkg="add_post_pro_bringup" name="openrave_launch" type="openrave_environment_setup.py" output="screen"></node>
+
+	<param name="robot_description_urdf" command="$(find xacro)/xacro --inorder -o $(find denso_robot_ros)/denso_robot_descriptions/vs6577_descriptions/urdf/vs6577.urdf $(find denso_robot_ros)/denso_robot_descriptions/vs6577_descriptions/urdf/vs6577.urdf.xacro"  /> 
+	
+	<param name="robot_description_dae" command="$(find collada_urdf)/urdf_to_collada $(find denso_robot_ros)/denso_robot_descriptions/vs6577_descriptions/urdf/vs6577.urdf $(find denso_robot_ros)/denso_robot_descriptions/vs6577_descriptions/urdf/vs6577.dae"  /> 
+
+</launch>

@@ -1,0 +1,8 @@
+<robot file="/home/cerlab/catkin_ws/src/add_post_pro2/add_post_pro_bringup/src/vs6577.dae">
+ <manipulator name="arm" >
+  <base>base_link</base>
+  <effector>J6</effector>
+  <Translation>0 0 0</Translation>
+  <rotationaxis>0 0 0 0</rotationaxis>
+  </manipulator>
+  </robot>

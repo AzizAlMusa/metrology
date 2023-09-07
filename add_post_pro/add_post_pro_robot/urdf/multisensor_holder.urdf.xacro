@@ -27,13 +27,13 @@
 		<visual>
 			<origin rpy="0 0 0" xyz="0 0 0"/>
 			<geometry>
-				<mesh filename="package://add_post_pro_robot/meshes/better_holder.stl" scale=".001 .001 .001"/>
+				<mesh filename="package://add_post_pro_robot/meshes/multisensor_holder_origin.stl" scale=".001 .001 .001"/>
 			</geometry>
 		</visual>
 		<collision>
 			<origin rpy="0 0 0" xyz="0 0 0"/>
 			<geometry>
-				<mesh filename="package://add_post_pro_robot/meshes/better_holder.stl" scale=".001 .001 .001"/>
+				<mesh filename="package://add_post_pro_robot/meshes/multisensor_holder_origin.stl" scale=".001 .001 .001"/>
 			</geometry>
 		</collision>
 		<inertial>
@@ -53,13 +53,14 @@
 		<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.000000"/>
 	</joint>
 
-
+	<!--Changes here!-->
 	<joint name="end_effector_magnet" type="fixed">
 		<parent link="J6"/>
 		<child link="EEF_sensor_holder"/>
-		<origin rpy="0.000000 0.000000 ${M_PI}" xyz="0.000000 0.000000 0.000000"/>
+		<origin rpy="0.000000 0.00000 ${225*M_PI/180}" xyz="0.000000 0.000000 0.000000"/>
 	</joint>
-
+	
+	<!--Changes here!-->
     <joint name="end_effector_scanner_holder" type="fixed">
     	<parent link="EEF_sensor_holder"/>
 		<child link="EEF_scanner"/>
@@ -81,6 +82,7 @@
 
 	<xacro:include filename="$(find add_post_pro_robot)/urdf/scancontrol.xacro"/>
 	<scancontrol2900-100 parent="EEF_scanner"/>
+
 
 	<xacro:include filename="$(find add_post_pro_robot)/urdf/depstech_camera.urdf.xacro"/>
 	<depstech_camera parent="EEF_depstech_camera"/>

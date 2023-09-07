@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+
 <robot name="tool" xmlns:xacro="http://www.ros.org/wiki/xacro">
 	<!-- DONE -->
     <link name="EEF_tool_holder">

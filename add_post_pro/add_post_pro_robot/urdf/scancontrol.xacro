@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="M_PI" value="3.1415926535897931" />
+
 <xacro:macro name="scancontrol2900-100" params="parent">
 <!-- DONE -->
     <!-- Scanner link -->
@@ -24,28 +26,24 @@
 	</link>
 
     <link name="scancontrol2900-50_laser"/>
-    
-    <link name="true_laser" />
-
-
+    <link name = "true_laser"/>
     <joint name="end_effector_scanner" type="fixed">
     	<parent link="${parent}"/>
 		<child link="EEF_scancontrol"/>
-		<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.000000"/>
+		<origin rpy="0.000000 0.0000 ${M_PI}" xyz="0.000000 0.000000 0.000000"/>
     </joint>
 
     <joint name="laser_joint" type="fixed">
         <parent link="EEF_scancontrol" />
         <child link="scancontrol2900-50_laser" />
-        <origin xyz="0 -0.0324522 -.0761366" rpy="0 ${M_PI/2} ${-M_PI/2}"/>
+        <origin xyz="0 -0.0324522 -.0761366" rpy="0 0 ${M_PI}"/>
     </joint>
-
 
     <joint name="imaginary_joint" type="fixed">
         <parent link="scancontrol2900-50_laser" />
         <child link="true_laser" />
-        <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0"/>
-    </joint>
+        <origin xyz="0 0 0" rpy="0 0 ${M_PI/2}"/>
+    </joint> 
         <!-- <origin xyz="0 -0.0324522 -.0761366" rpy="${M_PI} ${M_PI/2} ${M_PI/2}"/> -->
 	<gazebo reference="scancontrol2900-50_laser">
 		<sensor type="gpu_ray" name="scancontrol">

@@ -1,6 +1,5 @@
 controller_list:
   - name: fake_arm_controller
-    type: interpolate
     joints:
       - joint_1
       - joint_2
@@ -8,6 +7,6 @@ controller_list:
       - joint_4
       - joint_5
       - joint_6
-initial:  
-  - group: arm
-    pose: home
+initial:  # Define initial robot poses.
+#  - group: arm
+#    pose: home

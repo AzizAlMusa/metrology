@@ -43,16 +43,16 @@ void pose_printer(geometry_msgs::Pose pose){
 void demo1(std::vector<geometry_msgs::Pose> &pose_vector, moveit_visual_tools::MoveItVisualTools &visual_tools){
   namespace rvt = rviz_visual_tools;
 
-  Eigen::Matrix3d R;
-  R << 1, 0, 0,
-      0, 0, 1,
-      0, -1, 0;
+ Eigen::Matrix3d R;
+R << 1, 0, 0,
+    0, 0, 1,
+    0, -1, 0;
 
   Eigen::Quaterniond q(R);
 
-  float x_center = 0.0;
-  float y_center =  0.5;
-  float z_center = 0.75;
+float x_center = 0.0;
+float y_center = 0.5;
+float z_center = 0.75; 
   for (double x = x_center-0.25; x <= x_center+0.25; x += 0.05) {
     geometry_msgs::Pose pose;
     pose.position.x = x;
@@ -105,21 +105,21 @@ void demo2(std::vector<geometry_msgs::Pose> &pose_vector, moveit_visual_tools::M
   namespace rvt = rviz_visual_tools;
 
   Eigen::Matrix3d R;
-  R << 0, 1, 0,
-      0, 0, -1,
-      -1, 0, 0;
+R << 1, 0, 0,
+0, 0, 1,
+0, -1, 0;
 
   Eigen::Quaterniond q(R);
 
-  float x_center = 0.0;
-  float y_center =  0.25;
-  float z_center = 0.75;
+ float x_center = 0.0;
+float y_center = 0.5;
+float z_center = 0.75; 
 
-  int num_points = 16;
+  int num_points = 16*3;
  
   float radius = 0.1;
   float angle = 0;
-  float increment = 2 * M_PI / num_points;
+  float increment = 3* 2 * M_PI / num_points;
 
   for (int i=0; i < num_points; i++){
 
@@ -142,10 +142,6 @@ void demo2(std::vector<geometry_msgs::Pose> &pose_vector, moveit_visual_tools::M
 
 
   }
-
-
-
-
 }
 
 std::vector<double> get_random_seed(){
@@ -258,10 +254,10 @@ int main(int argc, char** argv)
 
   std::vector<geometry_msgs::Pose> pose_vector;
 
-  demo1(pose_vector, visual_tools);
+  // demo1(pose_vector, visual_tools);
 
 
-  // demo2(pose_vector, visual_tools);
+  demo2(pose_vector, visual_tools);
 
 
   double pose_tol = 0.01;

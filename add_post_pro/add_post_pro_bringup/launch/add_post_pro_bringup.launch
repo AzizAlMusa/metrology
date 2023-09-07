@@ -7,13 +7,13 @@
     <arg name="y" default="0"/>
     <arg name="z" default="0.0925"/>
 
-    <arg name="ip_address" default="169.254.39.16"/>
+    <arg name="ip_address" default="128.2.56.10"/>
 
     <!-- "box" or "turntable" -->
     <arg name="processing_phase" default="box"/>
     <arg name="direct_joint_control" default="false"/>
     <arg name="denso_robot" default="vs6577"/>
-    <arg name="robot_name" default="add_post_pro_robot"/>
+    <arg name="robot_name" default="add_post_pro_robot_b120"/>
     <arg name="load_robot_description" default="true"/>
     <arg name="robot_description" default="robot_description"/>
     

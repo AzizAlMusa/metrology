@@ -3,12 +3,12 @@
     <xacro:arg name="sim" default="True" />
     <xacro:include filename="$(find denso_robot_descriptions)/vs6577_description/urdf/vs6577.urdf.xacro"/>
 
-    <!-- <xacro:include filename="$(find add_post_pro_robot)/urdf/turntable.urdf.xacro"/> -->
+    <xacro:include filename="$(find add_post_pro_robot)/urdf/turntable.urdf.xacro"/>
 
     <!-- Create camera instance -->
-    <!-- <turntable parent="world">
+    <turntable parent="world">
 		<origin xyz="0 -.6 0.16" rpy="0 0 0"/>
-    </turntable> -->
+    </turntable>
 
     <xacro:include filename="$(find add_post_pro_robot)/urdf/multisensor_holder.urdf.xacro"/>
 </robot>

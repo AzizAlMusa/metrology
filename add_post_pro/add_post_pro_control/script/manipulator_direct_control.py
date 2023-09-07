@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import time
 from time import sleep
 from os import path
 
@@ -22,7 +23,7 @@ class ArmJointController:
 
         # Initialize action client to the denso arm
         self.client = actionlib.SimpleActionClient(
-            "/add_post_pro_robot/arm_controller/follow_joint_trajectory",
+            "/add_post_pro_robot_b120/arm_controller/follow_joint_trajectory",
             FollowJointTrajectoryAction
         )
         self.client.wait_for_server()
@@ -47,7 +48,8 @@ class ArmJointController:
     def move_to_starting_pose(self):
 
         # Set joint goals
-        time_step = 10
+        time_step = 5
+        
         pos_goal = FollowJointTrajectoryGoal()
         pos_goal.trajectory.joint_names = [
             'joint_1',
@@ -113,14 +115,17 @@ def move_manipulator():
     # Move Arm to initial position
     arm_controller.move_to_starting_pose()
 
-    raw_input('Arm at the starting position. Press enter to continue.')
+    # raw_input('Arm at the starting position. Press enter to continue.')
 
     # Move Arm
     arm_controller.move_arm()
 
 
 if __name__=='__main__':
+    start = time.time()
     try:
         move_manipulator()
     except rospy.ROSInterruptException:
         pass
+    end = time.time()
+    rospy.loginfo('Runtime = {} s'.format(end-start))
