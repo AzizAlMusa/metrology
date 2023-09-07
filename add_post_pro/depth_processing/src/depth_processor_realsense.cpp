@@ -111,7 +111,7 @@ bool captureMeasurement(std_srvs::Trigger::Request &req, std_srvs::Trigger::Resp
         try
         {
             ROS_INFO("Calling Lookup transform");
-            tf_listener_->lookupTransform("world", "camera_depth_optical_frame", ros::Time(0), transform);
+            tf_listener_->lookupTransform("world", "D415_color_optical_frame", ros::Time(0), transform);
             ROS_INFO("Lookup transform Done");
             measurements_.push_back(current_cloud_);  // Store the transformed point cloud
             transforms_.push_back(transform);  // Store the transform
@@ -150,6 +150,7 @@ bool captureMeasurement(std_srvs::Trigger::Request &req, std_srvs::Trigger::Resp
     bool getMeasurement(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
         // Check if there are any measurements stored
+        ROS_INFO("Get Measurement Service Called");
         if (!measurements_.empty())
         {
             // Convert the last stored point cloud to a ROS message
@@ -177,6 +178,7 @@ bool captureMeasurement(std_srvs::Trigger::Request &req, std_srvs::Trigger::Resp
 bool publishAllMeasurements(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res){
 
      // Check if there are any measurements stored
+     ROS_INFO("Publish Measurements Called");
     if (!measurements_.empty())
     {
         // Ensure the two vectors are of the same size
@@ -274,8 +276,12 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     sensor_msgs::PointCloud2 output;
     pcl::toROSMsg(*cloud_filtered, output);
     output.header = cloud_msg->header;  // Use the same header as the input cloud for consistency
+    // Change frame ID of the filtered pointcloud
+    output.header.frame_id = "D415_color_optical_frame";
+    
     current_cloud_ = cloud_filtered;
     cloud_pub_.publish(output);
+
 
     
     // // Adjust the point cloud based on the transform between camera_link and camera_link_adjusted
