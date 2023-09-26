@@ -111,7 +111,7 @@ bool captureMeasurement(std_srvs::Trigger::Request &req, std_srvs::Trigger::Resp
         try
         {
             ROS_INFO("Calling Lookup transform");
-            tf_listener_->lookupTransform("world", "D415_color_optical_frame", ros::Time(0), transform);
+            tf_listener_->lookupTransform("world", "camera_depth_optical_frame", ros::Time(0), transform);
             ROS_INFO("Lookup transform Done");
             measurements_.push_back(current_cloud_);  // Store the transformed point cloud
             transforms_.push_back(transform);  // Store the transform
@@ -277,7 +277,7 @@ void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     pcl::toROSMsg(*cloud_filtered, output);
     output.header = cloud_msg->header;  // Use the same header as the input cloud for consistency
     // Change frame ID of the filtered pointcloud
-    output.header.frame_id = "D415_color_optical_frame";
+    output.header.frame_id = "camera_depth_optical_frame";
     
     current_cloud_ = cloud_filtered;
     cloud_pub_.publish(output);

@@ -18,14 +18,15 @@ int main(int argc, char** argv)
   tf2_ros::TransformListener tfListener(tfBuffer);
   
   std::string laser_frame = "true_laser"; 
-  std::string target_frame = "turntable_plate"; 
+  std::string target_frame = "world"; 
 
 
   // Create a publisher for the transformed point cloud
   ros::Publisher pub = nh.advertise<sensor_msgs::PointCloud2>("transformed_cloud", 10);
 
   // Create a subscriber for the input point cloud
-  ros::Subscriber sub = nh.subscribe<sensor_msgs::PointCloud2>("pointcloud_topic", 10,
+//   ros::Subscriber sub = nh.subscribe<sensor_msgs::PointCloud2>("pointcloud_topic", 10,
+ros::Subscriber sub = nh.subscribe<sensor_msgs::PointCloud2>("scancontrol_pointcloud", 10,
       [&](const sensor_msgs::PointCloud2::ConstPtr& input_pc2) {
             
             // Create a container for the output pointcloud

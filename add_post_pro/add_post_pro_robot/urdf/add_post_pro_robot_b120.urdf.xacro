@@ -3,4 +3,5 @@
     <xacro:include filename="$(find denso_robot_descriptions)/vs6577_description/urdf/vs6577.urdf.xacro"/>
 
     <xacro:include filename="$(find add_post_pro_robot)/urdf/multisensor_holder.urdf.xacro"/>
+    <!-- <xacro:include filename="$(find add_post_pro_robot)/urdf/l515_mount.urdf.xacro"/> -->
 </robot>

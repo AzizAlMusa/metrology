@@ -42,7 +42,7 @@
     <joint name="imaginary_joint" type="fixed">
         <parent link="scancontrol2900-50_laser" />
         <child link="true_laser" />
-        <origin xyz="0 0 0" rpy="0 0 ${M_PI/2}"/>
+        <origin xyz="0 0 0" rpy="${M_PI} 0 0"/>
     </joint> 
         <!-- <origin xyz="0 -0.0324522 -.0761366" rpy="${M_PI} ${M_PI/2} ${M_PI/2}"/> -->
 	<gazebo reference="scancontrol2900-50_laser">

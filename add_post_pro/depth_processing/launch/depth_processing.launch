@@ -58,4 +58,6 @@
 
     <node pkg="depth_processing" type="depth_service_gui.py" name="depth_gui" output="screen" />
 
+    <node pkg="depth_processing" type="mesh_generator" name="mesh_generator_cpp"  output="screen"/>
+
 </launch>

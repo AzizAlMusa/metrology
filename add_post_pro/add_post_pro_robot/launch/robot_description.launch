@@ -1,0 +1,24 @@
+<!-- This launch file sets the robot description parameter to a specific URDF file -->
+
+<launch>
+
+    <arg name="robot_name" default="add_post_pro_robot_b120"/> 
+    <!-- Specify the location of your custom URDF file -->
+    <param name="robot_description" command="xacro  '$(find add_post_pro_robot)/urdf/add_post_pro_robot_b120.urdf.xacro'"/>
+    <include ns="/$(arg robot_name)" file="$(find add_post_pro_robot)/config/vs6577.launch.xml" />
+    <node name="denso_robot_control" pkg="denso_robot_control" type="denso_robot_control" output="screen" ns="/$(arg robot_name)"/>
+
+    <rosparam file="$(find add_post_pro_robot)/config/add_post_pro_robot_b120_control.yaml" command="load" />
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+        ns="/$(arg robot_name)" args="joint_state_controller arm_controller" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher"
+        type="robot_state_publisher" respawn="false" output="screen">
+        <remap from="/joint_states" to="/$(arg robot_name)/joint_states" />
+    </node>
+
+    <include file="$(find add_post_pro_robot_b120_config)/launch/move_group.launch">
+        <arg name="publish_monitored_planning_scene" value="true" />
+    </include>
+    
+</launch>

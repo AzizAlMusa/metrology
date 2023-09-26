@@ -23,16 +23,16 @@ def call_service(service_name, service_type):
 root = tk.Tk()
 root.title("ROS Service GUI")
 
-button1 = tk.Button(root, text="Align Measurements", command=lambda: call_service('/depth_processor_cpp/align_measurements', AlignPointClouds))
+button1 = tk.Button(root, text="Align Measurements", command=lambda: call_service('/depth_processor_realsense_cpp/align_measurements', AlignPointClouds))
 button1.pack()
 
-button2 = tk.Button(root, text="Capture Measurement", command=lambda: call_service('/depth_processor_cpp/capture_measurement', CaptureMeasurement))
+button2 = tk.Button(root, text="Capture Measurement", command=lambda: call_service('/depth_processor_realsense_cpp/capture_measurement', CaptureMeasurement))
 button2.pack()
 
-button3 = tk.Button(root, text="Get Measurement", command=lambda: call_service('/depth_processor_cpp/get_measurement', GetMeasurement))
+button3 = tk.Button(root, text="Get Measurement", command=lambda: call_service('/depth_processor_realsense_cpp/get_measurement', GetMeasurement))
 button3.pack()
 
-button4 = tk.Button(root, text="Publish All Measurements", command=lambda: call_service('/depth_processor_cpp/publish_all_measurements', PublishAllMeasurements))
+button4 = tk.Button(root, text="Publish All Measurements", command=lambda: call_service('/depth_processor_realsense_cpp/publish_all_measurements', PublishAllMeasurements))
 button4.pack()
 
 root.mainloop()

@@ -418,9 +418,6 @@ bool alignPointClouds(std_srvs::Trigger::Request &req, std_srvs::Trigger::Respon
 }
 
 
-
-
-
     pcl::PointCloud<pcl::PointXYZ>::Ptr createSurfaceBoxPointCloud(float x_size, float y_size, float z_size, float resolution)
 {
 

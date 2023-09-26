@@ -129,8 +129,8 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
   # ${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake
 )
 
@@ -235,3 +235,8 @@ add_executable(depth_processor_realsense src/depth_processor_realsense.cpp)
 target_link_libraries(depth_processor_realsense ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_dependencies(depth_processor_realsense ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(depth_processor_realsense ${PROJECT_NAME}_gencfg)
+
+add_executable(mesh_generator src/mesh_generator.cpp)
+target_link_libraries(mesh_generator ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+add_dependencies(mesh_generator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(mesh_generator ${PROJECT_NAME}_gencfg)

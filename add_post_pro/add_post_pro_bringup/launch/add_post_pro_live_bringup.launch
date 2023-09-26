@@ -82,27 +82,30 @@
     </include> 
 
 <!-- Scan control launch-->
-    <!-- <include file="$(find micro_epsilon_scancontrol_driver)/launch/load_driver.launch"/>
+    <include file="$(find micro_epsilon_scancontrol_driver)/launch/load_driver.launch"/>
     <node name="transform_signal" pkg="laser_scanner_pkg" type="signal_transformer" respawn="true"/>
-    <node name="concatenate_pointcloud" pkg="laser_scanner_pkg" type="aggregate_laser_scans" respawn="true"/> -->
+    <node name="concatenate_pointcloud" pkg="laser_scanner_pkg" type="aggregate_laser_scans" respawn="true"/>
 
     <!-- Realsense launch -->
-    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
         <arg name="filters" value="pointcloud" />
-        <arg name="clip_distance" value="0.5" />
+        <arg name="clip_distance" value="1" />
     </include>
 
-    <node name="frame_attachment_node" pkg="realsense_cam" type="pointcloud_transformer.py"/>
+    <node name="frame_attachment_node" pkg="realsense_cam" type="pointcloud_transformer.py"/> -->
 
 <!-- Depth Processing -->
 
-    <node pkg="depth_processing" type="depth_processor_realsense" name="depth_processor_realsense_cpp" output="screen" >
+    <!-- <node pkg="depth_processing" type="depth_processor_realsense" name="depth_processor_realsense_cpp" output="screen" >
         <param name="use_voxel_filter" value="true"/>
         <param name="use_sor_filter" value="true"/>
         <param name="use_passthrough_filter" value="true"/>
         <param name="use_sac_registration" value="false"/>
     </node>
 
-    <node pkg="depth_processing" type="depth_service_gui.py" name="depth_gui" output="screen" />
+    <node pkg="depth_processing" type="depth_service_gui_realsense.py" name="depth_gui" output="screen" /> -->
+
+<!-- Mesh Generator -->
+    <!-- <node pkg="depth_processing" type="mesh_generator" name="mesh_generator_cpp"  output="screen"/> -->
 
 </launch>

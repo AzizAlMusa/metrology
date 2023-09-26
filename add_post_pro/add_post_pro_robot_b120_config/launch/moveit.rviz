@@ -9,6 +9,7 @@ Panels:
         - /MotionPlanning1/Scene Robot1
         - /MotionPlanning1/Planning Request1
         - /MotionPlanning1/Planned Path1
+        - /PointCloud21
         - /TF1/Frames1
         - /PointCloud22
       Splitter Ratio: 0.7425600290298462
@@ -343,25 +344,94 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.0010000000474974513
       Style: Flat Squares
-      Topic: /output_cloud_topic
+      Topic: /scancontrol_pointcloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        D415_camera:
+          Value: false
+        D415_color_optical_frame:
+          Value: false
+        D415_depth_optical_frame:
+          Value: false
+        D415_ired1_optical_frame:
+          Value: false
+        D415_ired2_optical_frame:
+          Value: false
+        EEF_depstech_camera:
+          Value: false
+        EEF_scancontrol:
+          Value: false
+        EEF_scanner:
+          Value: false
+        EEF_sensor_holder:
+          Value: false
+        EEF_tool_mount:
+          Value: false
+        J1:
+          Value: false
+        J2:
+          Value: false
+        J3:
+          Value: false
+        J4:
+          Value: false
+        J5:
+          Value: false
+        J6:
+          Value: false
+        base_link:
+          Value: false
+        depstech_camera_link:
+          Value: false
+        scancontrol2900-50_laser:
+          Value: false
+        true_laser:
+          Value: true
+        world:
+          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world:
+          base_link:
+            J1:
+              J2:
+                J3:
+                  J4:
+                    J5:
+                      J6:
+                        EEF_sensor_holder:
+                          D415_camera:
+                            D415_color_optical_frame:
+                              {}
+                            D415_depth_optical_frame:
+                              {}
+                            D415_ired1_optical_frame:
+                              {}
+                            D415_ired2_optical_frame:
+                              {}
+                          EEF_depstech_camera:
+                            depstech_camera_link:
+                              {}
+                          EEF_scanner:
+                            EEF_scancontrol:
+                              scancontrol2900-50_laser:
+                                true_laser:
+                                  {}
+                        EEF_tool_mount:
+                          {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -382,16 +452,16 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 1
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /depth_processor_realsense_cpp/filtered_cloud
+      Topic: /output_cloud_topic
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /camera/color/image_raw
       Max Value: 1
       Median window: 5
@@ -401,9 +471,9 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /camera/depth/image_rect_raw
       Max Value: 1
       Median window: 5
@@ -413,7 +483,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -430,7 +500,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.322337031364441
+      Distance: 2.407822847366333
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -445,10 +515,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.44979584217071533
+      Pitch: 0.18520361185073853
       Target Frame: world
       Value: XYOrbit (rviz)
-      Yaw: 1.378581166267395
+      Yaw: 2.5917725563049316
     Saved: ~
 Window Geometry:
   Displays:
@@ -464,7 +534,7 @@ Window Geometry:
     collapsed: false
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd000000020000000000000391000003a7fc0200000007fb000000100044006900730070006c006100790073010000003d00000219000000c900fffffffb0000000800480065006c00700000000342000000bb0000006e00fffffffb0000000a0056006900650077007300000003b0000000b0000000a400fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000374000001890000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e0067010000025c000001880000017d00ffffff00000002000003aa00000106fc0100000002fb0000000a0049006d0061006700650100000397000001f00000005e00fffffffb0000000a0049006d006100670065010000058d000001b40000005e00ffffff000003aa0000029b00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000020000000000000391000003a7fc0200000007fb000000100044006900730070006c006100790073010000003d00000219000000c900fffffffb0000000800480065006c00700000000342000000bb0000006e00fffffffb0000000a0056006900650077007300000003b0000000b0000000a400fffffffb0000000c00430061006d00650072006100000002ff000001610000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000374000001890000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001600000016fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e0067010000025c000001880000017d00ffffff00000002000003aa00000106fc0100000002fb0000000a0049006d0061006700650000000397000001f00000005e00fffffffb0000000a0049006d0061006700650000000397000003aa0000005e00ffffff000003aa000003a700000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1857
