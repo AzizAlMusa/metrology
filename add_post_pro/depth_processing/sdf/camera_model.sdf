@@ -40,13 +40,13 @@
         <camera>
           <horizontal_fov>1.01960784314</horizontal_fov>
           <image>
-            <width>520</width>
-            <height>510</height>
+            <width>1560</width>
+            <height>1530</height>
             <format>R8G8B8</format>
           </image>
           <clip>
-            <near>0.2</near>
-            <far>2</far>
+            <near>0.05</near>
+            <far>1</far>
           </clip>
         </camera>
         <plugin name="depth_camera_controller" filename="libgazebo_ros_depth_camera.so">
@@ -73,8 +73,8 @@
                 <format>R8G8B8</format>
             </image>
             <clip>
-                <near>0.2</near>
-                <far>2</far>
+                <near>0.05</near>
+                <far>1</far>
             </clip>
             </camera>
             <visualize>true</visualize>

@@ -76,6 +76,10 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "*.txx": "cpp"
+        "*.txx": "cpp",
+        "any": "cpp",
+        "filesystem": "cpp",
+        "regex": "cpp",
+        "variant": "cpp"
     }
 }

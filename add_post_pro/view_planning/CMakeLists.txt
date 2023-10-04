@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(depth_processing)
+project(view_planning)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,26 +8,10 @@ project(depth_processing)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  pcl_conversions
-  pcl_ros
+  roscpp
   rospy
-  sensor_msgs
-  message_generation
-  dynamic_reconfigure
+  std_msgs
 )
-
-
-find_package(PCL 1.8 REQUIRED)
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-
-find_package(VTK REQUIRED)
-include(${VTK_USE_FILE})
-
-find_package(CGAL REQUIRED)
-include(${CGAL_USE_FILE})
-
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -70,18 +54,11 @@ include(${CGAL_USE_FILE})
 # )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  LoadMesh.srv
-  CaptureMeasurement.srv
-  GetMeasurement.srv
-  PublishAllMeasurements.srv
-  AlignPointClouds.srv
-  GetIntersectionCloud.srv
-  GenerateMesh.srv
-  DeviationHeatmap.srv
-  VisualizePointCloud.srv
-)
+# add_service_files(
+#   FILES
+#   Service1.srv
+#   Service2.srv
+# )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -91,10 +68,10 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  sensor_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -111,11 +88,10 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
-    cfg/Filters.cfg
+# generate_dynamic_reconfigure_options(
 #   cfg/DynReconf1.cfg
 #   cfg/DynReconf2.cfg
-)
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -127,12 +103,11 @@ generate_dynamic_reconfigure_options(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-  # LIBRARIES depth_processing  # Uncomment this if you have a library named depth_processing
-  CATKIN_DEPENDS pcl_conversions pcl_ros sensor_msgs message_runtime roscpp 
-  # DEPENDS system_lib  # Uncomment and specify if you have system dependencies
+#  INCLUDE_DIRS include
+#  LIBRARIES view_planning
+#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  DEPENDS system_lib
 )
-
 
 ###########
 ## Build ##
@@ -141,14 +116,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
+# include
   ${catkin_INCLUDE_DIRS}
-  # ${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/depth_processing.cpp
+#   src/${PROJECT_NAME}/view_planning.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -159,7 +133,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/depth_processing_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/view_planning_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -175,9 +149,6 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-# add_dependencies(depth_processor ${PROJECT_NAME}_gencfg)
-
-
 
 #############
 ## Install ##
@@ -214,8 +185,6 @@ include_directories(
 #   PATTERN ".svn" EXCLUDE
 # )
 
-
-
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
 #   # myfile1
@@ -228,26 +197,10 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_depth_processing.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_view_planning.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-
-
-
-add_executable(depth_processor src/depth_processor.cpp)
-target_link_libraries(depth_processor ${catkin_LIBRARIES} ${PCL_LIBRARIES} )
-add_dependencies(depth_processor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(depth_processor ${PROJECT_NAME}_gencfg)
-
-
-add_executable(mesh_preprocessor src/mesh_preprocessor.cpp)
-target_link_libraries(mesh_preprocessor  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBS})
-add_dependencies(mesh_preprocessor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-add_executable(view_plan src/view_plan.cpp)
-target_link_libraries(view_plan  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBS})
-add_dependencies(view_plan ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

@@ -48,5 +48,8 @@ button6.pack()
 button7 = tk.Button(root, text="Get Deviation Map", command=lambda: call_service('/depth_processor_cpp/deviation_mesh', DeviationHeatmap))
 button7.pack()
 
+button8 = tk.Button(root, text="Visualize Cloud", command=lambda: call_service('/depth_processor_cpp/visualize_cloud', DeviationHeatmap))
+button8.pack()
+
 root.mainloop()
 

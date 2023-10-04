@@ -76,7 +76,8 @@ public:
     {   
 
         std::string package_path = ros::package::getPath("depth_processing");
-        nominal_model_path = package_path + "/saved_models/resampled_cube.stl";
+        nominal_model_path = package_path + "/saved_models/remesh_bell.stl";
+        nominal_cloud_path = package_path + "/saved_models/remesh_bell.pcd";
         // Subscribers
         cloud_sub_ = nh_.subscribe("/robot/depth_camera/points", 1, &DepthProcessor::pointCloudCallback, this);
         depth_image_sub_ = nh_.subscribe("/robot/depth_camera/image_raw", 1, &DepthProcessor::depthImageCallback, this);
@@ -99,6 +100,7 @@ public:
         intersect_service_ = nh_.advertiseService("intersect_point_clouds", &DepthProcessor::intersectPointClouds, this);
         mesh_service_ = nh_.advertiseService("generate_mesh", &DepthProcessor::generateMesh, this);
         deviation_service_ = nh_.advertiseService("deviation_mesh", &DepthProcessor::visualizeDeviationHeatmap2, this);
+        visualize_service_ = nh_.advertiseService("visualize_cloud", &DepthProcessor::visualize_pointcloud, this);
 
         // Load launch file parameters
         nh_.param("use_voxel_filter", use_voxel_filter_, true);
@@ -129,6 +131,26 @@ public:
 
   
     }  
+
+bool visualize_pointcloud(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+        if (pcl::io::loadPCDFile<pcl::PointXYZ>(nominal_cloud_path, *cloud) == -1)
+        {
+            PCL_ERROR("Couldn't read the .pcd file\n");
+            res.success = false;
+            res.message = "Failed to load the PCD file";
+            return false;
+        }
+
+        viewer->addPointCloud<pcl::PointXYZ>(cloud, "sample cloud");
+        viewer->spinOnce(10000);
+
+        res.success = true;
+        res.message = "Successfully visualized the point cloud";
+        return true;
+    }
 
     bool loadReferenceMesh(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
 {
@@ -167,10 +189,49 @@ public:
         pcl::PointXYZ point;
         point.x = p[0];
         point.y = p[1];
-        point.z = p[2] + 0.25;
+        point.z = p[2] ; //+ 0.25 (for the cube.stl only)
 
         nominal_cloud_basic->points.push_back(point);
     }
+
+    // New code for additional point sampling starts here
+    std::vector<vtkIdType> triangleIndices;
+    for (vtkIdType i = 0; i < polydata->GetNumberOfCells(); i++) {
+        if (polydata->GetCellType(i) == VTK_TRIANGLE) {
+            triangleIndices.push_back(i);
+        }
+    }
+
+   int target_samples = 50000;
+    for (int i = 0; i < target_samples; i++) {
+        int tri_index = rand() % triangleIndices.size();
+        vtkIdType chosen_triangle_index = triangleIndices[tri_index];
+        vtkCell* chosen_triangle = polydata->GetCell(chosen_triangle_index);
+
+        double A[3], B[3], C[3];
+        polydata->GetPoint(chosen_triangle->GetPointId(0), A);
+        polydata->GetPoint(chosen_triangle->GetPointId(1), B);
+        polydata->GetPoint(chosen_triangle->GetPointId(2), C);
+
+        double u = rand() / (double)RAND_MAX;
+        double v = rand() / (double)RAND_MAX;
+        if (u + v > 1) {
+            u = 1 - u;
+            v = 1 - v;
+        }
+        double w = 1 - u - v;
+
+        pcl::PointXYZ sampled_point;
+        sampled_point.x = A[0] * u + B[0] * v + C[0] * w;
+        sampled_point.y = A[1] * u + B[1] * v + C[1] * w;
+        sampled_point.z = A[2] * u + B[2] * v + C[2] * w;
+
+        nominal_cloud_basic->points.push_back(sampled_point);
+    }
+
+    nominal_cloud_basic->width = nominal_cloud_basic->points.size();
+    nominal_cloud_basic->height = 1;
+    nominal_cloud_basic->is_dense = true;
 
     // Compute normals
     pcl::NormalEstimation<pcl::PointXYZ, pcl::PointNormal> ne;
@@ -481,7 +542,7 @@ bool alignPointClouds(std_srvs::Trigger::Request &req, std_srvs::Trigger::Respon
 
     // This extremely important for good quality registrations. The nature of the problem means measurements are not that far off.
     // a 2 cm correspondence should be generous and avoids misaligned registrations.
-    icp.setMaxCorrespondenceDistance(0.001); 
+    icp.setMaxCorrespondenceDistance(0.0005); 
 
     icp.setTransformationEpsilon(1e-9);
 
@@ -947,7 +1008,7 @@ bool visualizeDeviationHeatmap2(std_srvs::Trigger::Request &req, std_srvs::Trigg
 
     // Initialize counter
     int counter = 0;
-    const int NUM_OF_NEIGHBORS = 5;
+    const int NUM_OF_NEIGHBORS = 1;
     // Loop through each point in nominal_cloud_basic
     for (const auto& X : nominal_cloud_basic->points) {
       
@@ -1088,11 +1149,6 @@ bool visualizeDeviationHeatmap2(std_srvs::Trigger::Request &req, std_srvs::Trigg
 
 
 
-
-
-
-
-
     pcl::PointCloud<pcl::PointXYZ>::Ptr createSurfaceBoxPointCloud(float x_size, float y_size, float z_size, float resolution)
 {
 
@@ -1227,6 +1283,7 @@ private:
     ros::ServiceServer mesh_service_;
     ros::ServiceServer deviation_service_; //rename
     ros::ServiceServer load_service_;
+    ros::ServiceServer visualize_service_;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr current_cloud_;
     pcl::PointCloud<pcl::PointXYZ>::Ptr adjusted_cloud_;
@@ -1251,7 +1308,7 @@ private:
     pcl::PolygonMesh scanned_mesh;
     
     std::string nominal_model_path;
-
+    std::string nominal_cloud_path;
 
      // Filter flags
     bool use_voxel_filter_;

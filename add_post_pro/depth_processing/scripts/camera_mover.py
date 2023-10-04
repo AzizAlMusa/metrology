@@ -20,18 +20,19 @@ def move_camera_to_poses():
         yaw = angle + math.pi  # camera facing towards the cube
         poses.append((x, y, z, 0, 0, yaw))
     
+    alpha = 0.4
     poses = [
-        (-0.5, -0.5, 1.0, 0, math.pi / 4, math.pi / 4),    # Top-left corner (looking towards origin)
-        (-0.5, 0.5, 1.0, 0, math.pi / 4, -math.pi / 4),   # Top-right corner (looking towards origin)
-        (0.5, 0.5, 1.0, 0, math.pi / 4, - math.pi * 3 / 4),   # Bottom-right corner (looking towards origin)
-        (0.5, -0.5, 1.0, 0, math.pi / 4, math.pi  * 3 / 4),   # Bottom-left corner (looking towards origin)
+        (-0.5 * alpha, -0.5 * alpha, 1.0 * alpha, 0, math.pi / 4, math.pi / 4),    # Top-left corner (looking towards origin)
+        (-0.5 * alpha, 0.5 * alpha, 1.0 * alpha, 0, math.pi / 4, -math.pi / 4),   # Top-right corner (looking towards origin)
+        (0.5 * alpha, 0.5 * alpha, 1.0 * alpha, 0, math.pi / 4, - math.pi * 3 / 4),   # Bottom-right corner (looking towards origin)
+        (0.5 * alpha, -0.5 * alpha, 1.0 * alpha, 0, math.pi / 4, math.pi  * 3 / 4),   # Bottom-left corner (looking towards origin)
        
         # (-0.5, -0.5, 0.0, 0, math.pi / 4, math.pi / 4),   # Bottom-left corner (looking away from origin)
         # (-0.5, 0.5, 0.0, 0, -math.pi / 4, math.pi / 4),  # Bottom-right corner (looking away from origin)
         # (0.5, 0.5, 0.0, 0, -math.pi / 4, -math.pi / 4),  # Top-right corner (looking away from origin)
         # (0.5, -0.5, 0.0, 0, math.pi / 4, -math.pi / 4),  # Top-left corner (looking away from origin)
 
-        (0.0, 0.0, 1.55, 0, math.pi / 2, 0),             # Middle of the left face (looking towards origin)
+        (0.0, 0.0, 1.2, 0, math.pi / 2, 0),             # Middle of the left face (looking towards origin)
        
 
         (0.0, 1.55, 0.25, 0, 0, -math.pi / 2),  # Middle of the top face (looking towards origin)

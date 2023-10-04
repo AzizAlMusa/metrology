@@ -1,0 +1,5 @@
+*.sh
+condaenv/
+miniconda3/
+myenv/
+__pycache__/
