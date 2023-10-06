@@ -86,6 +86,10 @@
     <node name="transform_signal" pkg="laser_scanner_pkg" type="signal_transformer" respawn="true"/>
     <node name="concatenate_pointcloud" pkg="laser_scanner_pkg" type="aggregate_laser_scans" respawn="true"/>
 
+    <node name="pointcloud_saver_service" pkg="laser_scanner_pkg" type="save_pcl" respawn="true"/>
+    <!-- <service name="save_pointcloud_service" type="std_srvs/Trigger"/> -->
+
+
     <!-- Realsense launch -->
     <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
         <arg name="filters" value="pointcloud" />
@@ -106,6 +110,6 @@
     <node pkg="depth_processing" type="depth_service_gui_realsense.py" name="depth_gui" output="screen" /> -->
 
 <!-- Mesh Generator -->
-    <!-- <node pkg="depth_processing" type="mesh_generator" name="mesh_generator_cpp"  output="screen"/> -->
+    <!--<node pkg="depth_processing" type="mesh_generator" name="mesh_generator_cpp"  output="screen"/> -->
 
 </launch>

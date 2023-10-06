@@ -215,3 +215,7 @@ target_link_libraries(signal_transformer  ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_executable(aggregate_laser_scans src/aggregate_laser_scans.cpp)
 add_dependencies(aggregate_laser_scans ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(aggregate_laser_scans  ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(save_pcl src/save_pcl.cpp)
+add_dependencies(save_pcl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(save_pcl  ${catkin_LIBRARIES} ${PCL_LIBRARIES})

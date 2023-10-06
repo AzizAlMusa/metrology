@@ -53,8 +53,10 @@ ros::Subscriber sub = nh.subscribe<sensor_msgs::PointCloud2>("scancontrol_pointc
             try
             {   
                 
-                listener.waitForTransform(input_pc2->header.frame_id,  output_pc2.header.frame_id, ros::Time(0), ros::Duration(0.1));
-                listener.lookupTransform(input_pc2->header.frame_id,  output_pc2.header.frame_id, ros::Time(0), transform);
+                // listener.waitForTransform(input_pc2->header.frame_id,  output_pc2.header.frame_id, ros::Time(0), ros::Duration(0.1));
+                // listener.lookupTransform(input_pc2->header.frame_id,  output_pc2.header.frame_id, ros::Time(0), transform);
+                listener.waitForTransform(output_pc2.header.frame_id, input_pc2->header.frame_id, ros::Time(0), ros::Duration(0.1));
+                listener.lookupTransform(output_pc2.header.frame_id, input_pc2->header.frame_id, ros::Time(0), transform);
             }
             catch (tf::TransformException& ex)
             {
