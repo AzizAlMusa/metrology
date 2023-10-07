@@ -14,9 +14,11 @@
         "/home/abdulaziz/ros_workspaces/metrology/src/add_post_pro/denso_robot_ros/bcap_service/include/**",
         "/home/abdulaziz/ros_workspaces/metrology/src/add_post_pro/denso_robot_ros/denso_robot_control/include/**",
         "/home/abdulaziz/ros_workspaces/metrology/src/add_post_pro/denso_robot_ros/denso_robot_core/include/**",
+        "/home/abdulaziz/ros_workspaces/metrology/src/add_post_pro/depth_processing/include/**",
         "/home/abdulaziz/ros_workspaces/metrology/src/gazebo_ros_link_attacher/include/**",
         "/home/abdulaziz/ros_workspaces/metrology/src/add_post_pro/realsense_gazebo_plugin/include/**",
         "/home/abdulaziz/ros_workspaces/metrology/src/add_post_pro/supervoxel_segmentation/include/**",
+        "/home/abdulaziz/ros_workspaces/metrology/src/add_post_pro/view_planning/include/**",
         "/home/abdulaziz/ros_workspaces/metrology/src/add_post_pro/visualization_utils/include/**",
         "/home/abdulaziz/ros_workspaces/metrology/src/vs6577_arm_ikfast_plugin/include/**",
         "/usr/include/**"

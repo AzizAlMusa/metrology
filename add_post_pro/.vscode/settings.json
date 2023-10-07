@@ -80,6 +80,7 @@
         "any": "cpp",
         "filesystem": "cpp",
         "regex": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "*.inc": "cpp"
     }
 }

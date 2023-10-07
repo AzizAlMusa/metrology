@@ -197,7 +197,7 @@ class Viewpoint:
 
         # Convert normalized depth to actual depth
         depth_array = np.asarray(depth_data)
-        actual_depth = depth_array * depth_range  + near_plane
+        actual_depth = 2 * near_plane * far_plane / (((depth_array - 0.5) * 2 * (far_plane - near_plane)) - near_plane - far_plane)
         pdb.set_trace()
         point_cloud = o3d.geometry.PointCloud.create_from_depth_image(
                     o3d.geometry.Image(actual_depth),
