@@ -81,6 +81,7 @@
         "filesystem": "cpp",
         "regex": "cpp",
         "variant": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "*.lxx": "cpp"
     }
 }

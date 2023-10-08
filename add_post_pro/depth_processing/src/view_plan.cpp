@@ -3,8 +3,11 @@
 #include <random>
 #include <cstdlib> // For std::rand() and std::srand()
 #include <ctime>   // For std::time()
+#include <unordered_set>
+#include <iomanip> // Include the <iomanip> library for formatting
 
-#include <vtkCamera.h> // Include for vtkCamera
+// These are VTK (Visualization Toolkit) headers for 3D visualization
+#include <vtkCamera.h>
 #include <vtkSmartPointer.h>
 #include <vtkSTLReader.h>
 #include <vtkPolyDataMapper.h>
@@ -31,9 +34,11 @@
 #include <vtkPointData.h>
 #include <vtkFloatArray.h>
 
+// These are headers related to point cloud processing
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
+// More VTK headers for visualization
 #include <vtkImageMapper.h>
 #include <vtkImageActor.h>
 
@@ -47,45 +52,115 @@
 #include <vtkUnsignedCharArray.h>
 #include <vtkCellData.h>
 #include <vtkLookupTable.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkGlyph3D.h>
+#include <vtkArrowSource.h>
+#include <vtkDoubleArray.h>
+#include <vtkKdTreePointLocator.h>
+
 
 class ViewPlanning {
 public:
+    // Constructor
     ViewPlanning() {
         // Initialization
+        
+        // Initialize VTK objects
         stlReader = vtkSmartPointer<vtkSTLReader>::New();
         mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
         actor = vtkSmartPointer<vtkActor>::New();
         renderer = vtkSmartPointer<vtkRenderer>::New();
         renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
 
+        // Set renderer background color to black
         renderer->SetBackground(0.0, 0.0, 0.0);
+
+        // Create a camera for the current viewpoint
         current_viewpoint = vtkSmartPointer<vtkCamera>::New();
         current_viewpoint->SetPosition(2, 2, 2);
         current_viewpoint->SetFocalPoint(0, 0, 0);
 
+        // Set default width and height for rendering
         width = 1280;
         height = 720;
 
+        // Seed the random number generator with the current time
         std::srand(static_cast<unsigned int>(std::time(nullptr)));
-
     }
 
-    void loadModel(const std::string& stlFilePath) {
+
+       void loadModel(const std::string& stlFilePath) {
+
         // Load the STL file
         stlReader->SetFileName(stlFilePath.c_str());
-        
+
         // Explicitly update the reader to load the file
         stlReader->Update();
-        
-        // Now, get the output
+
+        // Get the output
         polydata = stlReader->GetOutput();
-        
-        // Connect to mapper
+
+        // Compute Normals
+        vtkSmartPointer<vtkPolyDataNormals> normalGenerator = vtkSmartPointer<vtkPolyDataNormals>::New();
+        normalGenerator->SetInputData(polydata);
+        normalGenerator->ComputeCellNormalsOn();
+        normalGenerator->Update();
+        polydata = normalGenerator->GetOutput();
+
+        // Compute centroids and create new vtkPolyData for them
+        vtkSmartPointer<vtkPoints> centroids = vtkSmartPointer<vtkPoints>::New();
+        vtkSmartPointer<vtkFloatArray> centroidNormals = vtkSmartPointer<vtkFloatArray>::New();
+        centroidNormals->SetNumberOfComponents(3);
+
+        // PLOT NORMALS AND CALCULATE CENTROIDS AND CENTROID NORMALS 
+        vtkFloatArray* cellNormals = vtkFloatArray::SafeDownCast(polydata->GetCellData()->GetNormals());
+
+        for (vtkIdType i = 0; i < polydata->GetNumberOfCells(); ++i) {
+            vtkCell* cell = polydata->GetCell(i);
+
+            double p0[3], p1[3], p2[3];
+            cell->GetPoints()->GetPoint(0, p0);
+            cell->GetPoints()->GetPoint(1, p1);
+            cell->GetPoints()->GetPoint(2, p2);
+
+            double centroid[3] = {(p0[0] + p1[0] + p2[0]) / 3,
+                                (p0[1] + p1[1] + p2[1]) / 3,
+                                (p0[2] + p1[2] + p2[2]) / 3};
+
+            centroids->InsertNextPoint(centroid);
+
+            double normal[3];
+            cellNormals->GetTuple(i, normal);
+            centroidNormals->InsertNextTuple(normal);
+        }
+
+        // Create a new vtkPolyData for centroids and associate normals with points
+        centroidPolyData = vtkSmartPointer<vtkPolyData>::New();
+        centroidPolyData->SetPoints(centroids);
+        centroidPolyData->GetPointData()->SetNormals(centroidNormals);
+
+        // // Create arrow for glyphs
+        // vtkSmartPointer<vtkArrowSource> arrowSource = vtkSmartPointer<vtkArrowSource>::New();
+
+        // // Create glyphs at centroids
+        // vtkSmartPointer<vtkGlyph3D> glyph3D = vtkSmartPointer<vtkGlyph3D>::New();
+        // glyph3D->SetSourceConnection(arrowSource->GetOutputPort());
+        // glyph3D->SetInputData(centroidPolyData);
+        // glyph3D->SetVectorModeToUseNormal();
+
+        // // Create a glyph actor and add it to the renderer
+        // vtkSmartPointer<vtkActor> glyphActor = vtkSmartPointer<vtkActor>::New();
+        // vtkSmartPointer<vtkPolyDataMapper> glyphMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+        // glyphMapper->SetInputConnection(glyph3D->GetOutputPort());
+        // glyphActor->SetMapper(glyphMapper);
+
+        // renderer->AddActor(glyphActor);
+
+        // Connect the original polydata to the mapper and actor as before
         mapper->SetInputData(polydata);
-        
-        // Connect to actor
         actor->SetMapper(mapper);
     }
+
 
     void RandomizeTriangleColors() {
         // Create a vtkUnsignedCharArray to store the colors
@@ -160,15 +235,6 @@ public:
         vtkMath::Normalize(up);
 
 
-        //  // Initial 'World Up' vector (could be [0, 0, 1] or any other vector)
-        // double worldUp[3] = {0.0, 1.0, 0.0};
-
-        // // Compute ViewUp Vector
-        // double viewUp[3];
-        // vtkMath::Cross(worldUp, projection_direction, viewUp);
-        // vtkMath::Normalize(viewUp);
-
-
          // Create line actors to visualize the vectors
         vtkSmartPointer<vtkLineSource> projectionLine = vtkSmartPointer<vtkLineSource>::New();
         projectionLine->SetPoint1(posX, posY, posZ);
@@ -216,77 +282,33 @@ public:
     
     }
 
-//     void createViewpoint(double posX, double posY, double posZ,
-//                      double focalX, double focalY, double focalZ,
-//                      double near, double far, double angle)
-// {
-//     vtkSmartPointer<vtkCamera> camera = vtkSmartPointer<vtkCamera>::New();
-
-//     // Set position, focal point, clipping range, and view angle
-//     camera->SetPosition(posX, posY, posZ);
-//     camera->SetFocalPoint(focalX, focalY, focalZ);
-//     camera->SetClippingRange(near, far);
-//     camera->SetViewAngle(angle);
-
-//     // Compute Forward (Direction of Projection) Vector
-//     double forward[3];
-//     forward[0] = focalX - posX;
-//     forward[1] = focalY - posY;
-//     forward[2] = focalZ - posZ;
-
-//     if (!vtkMath::Normalize(forward))
-//     {
-//         // Normalization failed; Forward vector is zero. This is a degenerate case.
-//         // Set the up vector to a default (world up), and return.
-//         camera->SetViewUp(0.0, 1.0, 0.0);  // Default world up vector
-//         return;
-//     }
-
-//     // Set World Up Vector
-//     double worldUp[3] = {0.0, 1.0, 0.0};  // Assuming Y-up coordinate system
-
-//     // Compute Right Vector
-//     double right[3];
-//     vtkMath::Cross(forward, worldUp, right);
-
-//     if (!vtkMath::Normalize(right))
-//     {
-//         // Forward and WorldUp vectors are parallel. Choose a different WorldUp vector.
-//         // For example, if WorldUp was (0, 1, 0), use (1, 0, 0) as an alternative.
-//         worldUp[0] = 1.0; worldUp[1] = 0.0; worldUp[2] = 0.0;
-//         vtkMath::Cross(forward, worldUp, right);
-//         if (!vtkMath::Normalize(right))
-//         {
-//             // Further degenerate case handling. Set to default world up and return.
-//             camera->SetViewUp(0.0, 1.0, 0.0);
-//             return;
-//         }
-//     }
-
-//     // Compute Actual Up Vector
-//     double up[3];
-//     vtkMath::Cross(right, forward, up);
-
-//     if (!vtkMath::Normalize(up))
-//     {
-//         // Another degenerate case, this should be highly unlikely given prior checks.
-//         // Set to default world up and return.
-//         camera->SetViewUp(0.0, 1.0, 0.0);
-//         return;
-//     }
-
-//     // Set the camera's up vector
-//     camera->SetViewUp(up);
-
-//     viewpoints.push_back(camera);
-// }
-
     vtkSmartPointer<vtkCamera> get_current_viewpoint() {
         return current_viewpoint;
     }
 
     std::vector<vtkSmartPointer<vtkCamera>> get_viewpoints() {
         return viewpoints;
+    }
+
+    std::vector<std::vector<int>>  get_visibility_matrix() {
+        return visibilityMatrix;
+    }
+
+    std::vector<int> get_visibility_sum() {
+        
+        // Initialize a vector to hold the sum of each column, set initially to zeros
+        std::vector<int> columnSums(visibilityMatrix[0].size(), 0);
+
+        // Loop through each row
+        for (const auto& row : visibilityMatrix) {
+            // Loop through each column in the row
+            for (size_t j = 0; j < row.size(); ++j) {
+                // Add the value to the sum for that column
+                columnSums[j] += row[j];
+            }
+        }
+
+        return columnSums;
     }
 
 
@@ -367,7 +389,7 @@ public:
         
         double cameraPosition[3];
         camera->GetPosition(cameraPosition);
-        std::cout << "Camera Position: (" << cameraPosition[0] << ", " << cameraPosition[1] << ", " << cameraPosition[2] << ")" << std::endl;
+ 
 
         // Get the size of the render window
         int* size = offscreenWindow->GetSize();
@@ -377,8 +399,7 @@ public:
         // Debug print the near and far clipping planes
         double nearClip = camera->GetClippingRange()[0];
         double farClip = camera->GetClippingRange()[1];
-        std::cout << "Near Clipping Plane: " << nearClip << std::endl;
-        std::cout << "Far Clipping Plane: " << farClip << std::endl;
+
 
         // Create a float array to store depth data
         vtkSmartPointer<vtkFloatArray> depthData = vtkSmartPointer<vtkFloatArray>::New();
@@ -415,7 +436,7 @@ public:
         }
 
         projection_matrix = camera->GetProjectionTransformMatrix(offscreenRenderer);
-        printMatrix(projection_matrix);
+
         return depthData;
     }
 
@@ -435,7 +456,7 @@ public:
                 maxDepth = std::max(maxDepth, depthValue);
             }
 
-            std::cout << "Min, Max: (" << minDepth << ", " << maxDepth << ")" << std::endl;
+      
             // Copy and normalize depth data to image data object
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
@@ -477,9 +498,8 @@ public:
         
         // Compute the aspect ratio
         double aspect = static_cast<double>(this->width) / static_cast<double>(this->height);
-        std::cout << "Aspect = " << aspect << std::endl;
-        auto projectionMatrix = camera->GetProjectionTransformMatrix(aspect, nearClip, farClip);
-        printMatrix(projectionMatrix);
+
+   
         // Loop through the depth values
         for (int y = 0; y < this->height; ++y) {
             for (int x = 0; x < this->width; ++x) {
@@ -490,6 +510,10 @@ public:
                 // Access the depth value at the current pixel
                 float depthValue = depthValues->GetValue(index);
 
+                // cull unreflected depths
+                if (depthValue == 1.0) {
+                    continue;
+                }
                 // Convert pixel coordinates to NDC
                 double NDC_X = (2.0 * x / this->width - 1.0);
                 double NDC_Y = (2.0 * y / this->height - 1.0);
@@ -622,6 +646,211 @@ public:
         renderer->AddActor(actor);
     }
 
+    
+    void RemoveBackFacingTriangles(vtkSmartPointer<vtkCamera> viewpoint, std::vector<int>& visibleTriangles, vtkFloatArray* cellNormals) {
+            
+        std::vector<int> backFacingTriangles;
+
+        for (int index : visibleTriangles) {
+            double normal[3];
+            cellNormals->GetTuple(index, normal);
+
+            vtkCell* cell = polydata->GetCell(index);
+            double point[3];
+            cell->GetPoints()->GetPoint(0, point);  // Taking the first point of the triangle for illustration
+
+            double viewVector[3];
+            for (int j = 0; j < 3; ++j) {
+                viewVector[j] = viewpoint->GetPosition()[j] - point[j];
+            }
+
+            double dotProduct = normal[0] * viewVector[0] + normal[1] * viewVector[1] + normal[2] * viewVector[2];
+            
+            if (dotProduct <= 0) {
+                backFacingTriangles.push_back(index);
+            }
+        }
+
+        // Remove back-facing triangles from visibleTriangles
+        std::vector<int> newVisibleTriangles;
+        std::unordered_set<int> backFacingSet(backFacingTriangles.begin(), backFacingTriangles.end());
+        
+        for (int index : visibleTriangles) {
+            if (backFacingSet.find(index) == backFacingSet.end()) {
+                newVisibleTriangles.push_back(index);
+            }
+        }
+
+        // Update visibleTriangles
+        visibleTriangles = newVisibleTriangles;
+    }
+
+
+    void RemoveOutsideFrustumTriangles(vtkSmartPointer<vtkCamera> viewpoint, std::vector<int>& visibleTriangles) {
+        
+        double planes[24];
+        double aspect = static_cast<double>(width) / static_cast<double>(height);
+        viewpoint->GetFrustumPlanes(aspect, planes);
+
+        auto it = visibleTriangles.begin();
+        while (it != visibleTriangles.end()) {
+            int index = *it;
+            
+            vtkCell* cell = polydata->GetCell(index);
+            bool isOutside = false;
+
+            for (int i = 0; i < 6; ++i) { // 6 planes in the frustum
+                double* plane = &planes[i * 4]; // Each plane has 4 coefficients
+                isOutside = true; // Assume outside until proven inside for each plane
+                
+                for (int j = 0; j < 3; ++j) { // 3 vertices in a triangle
+                    double point[3];
+                    cell->GetPoints()->GetPoint(j, point);
+                    double distance = plane[0] * point[0] + plane[1] * point[1] + plane[2] * point[2] + plane[3];
+                    if (distance >= 0) {
+                        isOutside = false; // One point was inside this plane, so not fully outside
+                        break;
+                    }
+                }
+
+                if (isOutside) break; // Fully outside one plane, so exit loop
+            }
+
+            if (isOutside) {
+                it = visibleTriangles.erase(it); // Remove if outside frustum
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    void computeTrianglesWithPointCloud(vtkSmartPointer<vtkPoints> worldPoints, std::vector<int>& visibleTriangles){
+         // Extract points from the pre-calculated centroidPolyData
+        vtkSmartPointer<vtkPoints> centroidPoints = centroidPolyData->GetPoints();
+        // Check if the points object is valid
+
+        // Initialize a K-d tree and set its input points as centroids
+        vtkSmartPointer<vtkKdTreePointLocator> kdTree = vtkSmartPointer<vtkKdTreePointLocator>::New();
+        kdTree->SetDataSet(centroidPolyData);
+        kdTree->BuildLocator();
+
+        // List to keep track of visible centroid indices
+        std::vector<int> visibleCentroidIndices;
+
+        // Search for each worldPoint in the K-d tree
+        for (vtkIdType i = 0; i < worldPoints->GetNumberOfPoints(); ++i) {
+            double testPoint[3];
+            worldPoints->GetPoint(i, testPoint);
+
+            // Find the index of the nearest centroid point
+            vtkIdType id = kdTree->FindClosestPoint(testPoint);
+
+            // Get the coordinates of the nearest centroid point
+            double closestPoint[3];
+            centroidPoints->GetPoint(id, closestPoint);
+
+            // Calculate the distance between the worldPoint and the closest centroid
+            double distance = sqrt(vtkMath::Distance2BetweenPoints(testPoint, closestPoint));
+
+            // Check if the distance is within the specified threshold
+            if (distance <= 1e-02) {
+                // Add the index of the visible centroid to the list
+                visibleCentroidIndices.push_back(id);
+            }
+        }
+
+        // Final filtering step: Remove any triangles that don't have visible centroids
+        std::vector<int> finalVisibleTriangles;
+        for (int triangleIndex : visibleTriangles) {
+            if (std::find(visibleCentroidIndices.begin(), visibleCentroidIndices.end(), triangleIndex) != visibleCentroidIndices.end()) {
+                finalVisibleTriangles.push_back(triangleIndex);
+            }
+        }
+        visibleTriangles = finalVisibleTriangles;
+    }
+
+
+    std::vector<int> compute_visibility(vtkSmartPointer<vtkCamera> viewpoint, vtkSmartPointer<vtkPoints> worldPoints, int viewpoint_index) {
+        
+        // list of visible triangles
+        std::vector<int> visibleTriangles(polydata->GetNumberOfCells());
+
+        // Insert and initialize row for the current viewpoint in visibility matrix
+        visibilityMatrix.push_back(std::vector<int>(polydata->GetNumberOfCells(), 0));
+
+        // Initialize visibleTriangles to contain all triangle indices
+        std::iota(visibleTriangles.begin(), visibleTriangles.end(), 0);
+
+        // Get the normals of the faces
+        vtkFloatArray* cellNormals = vtkFloatArray::SafeDownCast(polydata->GetCellData()->GetNormals());
+
+        // Step 1: Remove back-facing triangles
+
+        RemoveBackFacingTriangles(viewpoint, visibleTriangles, cellNormals);
+
+        // Step 2: Frustum culling
+        RemoveOutsideFrustumTriangles(viewpoint, visibleTriangles);
+        
+        // Step 3: Efficient search for nearest triangle
+        computeTrianglesWithPointCloud(worldPoints, visibleTriangles);
+
+        // Step 4: Update visibility matrix
+        for (int i = 0; i < polydata->GetNumberOfCells(); ++i) {
+
+            if (std::find(visibleTriangles.begin(), visibleTriangles.end(), i) != visibleTriangles.end()) {
+                // This triangle is visible from the current viewpoint
+                visibilityMatrix[viewpoint_index][i] = 1;
+            } else {
+                // This triangle is not visible from the current viewpoint
+                visibilityMatrix[viewpoint_index][i] = 0;
+            }
+        }
+ 
+
+        // Code for compiling list based on previous steps
+   
+
+        return visibleTriangles;
+    }
+
+
+    void ColorVisibleTriangles(const std::vector<std::vector<int>> visibility_mat) {
+        // Get the sum of each column from visibility_mat
+        std::vector<int> columnSums = get_visibility_sum();
+
+        // Create a vtkUnsignedCharArray to store the colors
+        vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+        colors->SetNumberOfComponents(3);  // Three components per color for RGB
+        colors->SetName("TriangleColors");
+
+        for(vtkIdType i = 0; i < this->polydata->GetNumberOfCells(); i++) {
+            unsigned char color[3];
+
+            // Check the sum for the current triangle (column)
+            if (columnSums[i] > 0) {
+                // Color the visible triangles green
+                color[0] = 0;
+                color[1] = 255;
+                color[2] = 0;
+            } else {
+                // Color the non-visible triangles red
+                color[0] = 255;
+                color[1] = 0;
+                color[2] = 0;
+            }
+
+            colors->InsertNextTupleValue(color);
+        }
+
+        // Add the color data to the PolyData
+        this->polydata->GetCellData()->SetScalars(colors);
+
+        // Update the mapper
+        this->mapper->SetInputData(this->polydata);
+        this->mapper->Update();
+    }
+
+
     void visualizeScene() {
         // Visualize the scene
         renderer->AddActor(actor);
@@ -685,6 +914,7 @@ public:
     }
 
 private:
+
     vtkSmartPointer<vtkSTLReader> stlReader;
     vtkSmartPointer<vtkPolyDataMapper> mapper;
     vtkSmartPointer<vtkActor> actor;
@@ -697,6 +927,11 @@ private:
     int width, height;
 
     vtkPolyData* polydata;
+    vtkSmartPointer<vtkPoints> centroids;
+    vtkSmartPointer<vtkFloatArray> centroidNormals;
+    vtkSmartPointer<vtkPolyData> centroidPolyData;
+
+    std::vector<std::vector<int>> visibilityMatrix;
 
     // FOR TESTING
     vtkSmartPointer<vtkMatrix4x4> projection_matrix;
@@ -704,6 +939,8 @@ private:
 };
 
 int main(int argc, char **argv) {
+
+
     ros::init(argc, argv, "view_planning_node");
 
     // Initialize the ViewPlanning class
@@ -711,13 +948,9 @@ int main(int argc, char **argv) {
 
     // Load the STL model. Replace this with your own model path.
     std::string package_path = ros::package::getPath("depth_processing");
-    std::string stl_file_path = package_path + "/saved_models/cube.stl";
+    std::string stl_file_path = package_path + "/saved_models/cube_3072.stl";
     vp.loadModel(stl_file_path);
     vp.RandomizeTriangleColors();
-
-    // Create a camera
-    // vp.createCamera(1.0, 1.0, 1.0, 0.0, 0.0, 0.0);
-    // Visualize the scene
 
     /// Create the three viewpoints
     std::random_device rd;
@@ -727,12 +960,13 @@ int main(int argc, char **argv) {
     double random2 = dis(gen) - 0.5;
     double random3 = dis(gen) - 0.5;
 
-    vp.createViewpoint(0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
-    // vp.createViewpoint(0.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.1, 3.0, 45.0);
-    // vp.createViewpoint(-1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 0.1, 3.0, 45.0);
+    vp.createViewpoint(0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.1, 0.75, 45.0);
+    vp.createViewpoint(0.0, 0.6, 0.0, 0.0, 0.0, 0.0, 0.1, 0.75, 45.0);
+    vp.createViewpoint(0.0, -0.5, 0.5, 0.0, 0.0, 0.0, 0.1, 0.75, 45.0);
 
     auto viewpoints = vp.get_viewpoints();
-
+    std::vector<std::vector<int>> visibility_mat;
+    vtkSmartPointer<vtkPoints> aggregatedWorldPoints = vtkSmartPointer<vtkPoints>::New();
     // Create a PNG writer and save the image
     int index = 0;
     for(auto& viewpoint : viewpoints){
@@ -753,15 +987,39 @@ int main(int argc, char **argv) {
         vp.save_depth_image(depthData, filename);
 
         vtkSmartPointer<vtkPoints> worldPoints = vp.convertDepthTo3D(depthData, viewpoint);
+        std::vector<int> visibleTriangles = vp.compute_visibility(viewpoint, worldPoints, index);
 
-        // Add point cloud to renderer
-        vp.addPointCloudToRenderer(worldPoints);
+       
+       
+
+
+        // Append points to the aggregatedWorldPoints
+        for(vtkIdType i = 0; i < worldPoints->GetNumberOfPoints(); ++i) {
+            double point[3];
+            worldPoints->GetPoint(i, point);
+            aggregatedWorldPoints->InsertNextPoint(point);
+        }
 
        ++index;
     }
 
+    visibility_mat = vp.get_visibility_matrix();
+
+    vp.ColorVisibleTriangles(visibility_mat);
+
+    // vp.addPointCloudToRenderer(aggregatedWorldPoints);
+       
+    // Loop through the matrix and print it with proper formatting
+    for (const std::vector<int>& row : visibility_mat) {
+        for (int value : row) {
+            std::cout << std::left << std::setw(5) << value ;
+        }
+        std::cout << "\n"; // Use "\n" for a newline
+    }
+    
+    
     vp.visualizeScene();
 
-
     return 0;
+
 }
