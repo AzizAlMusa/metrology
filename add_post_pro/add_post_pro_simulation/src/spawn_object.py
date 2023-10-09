@@ -120,7 +120,7 @@ def app_spawn_model(req):
         model_list[req.model_name].append(instance_name)
     print(spawn_model(req.instance_name, model_xml, "", pose, parent_frame))
 
-    model_1 = "robot"
+    model_1 = "add_post_pro_robot"
     link_1 = "turntable_plate"
     model_2 = req.instance_name
     link_2 = req.model_name
@@ -131,6 +131,7 @@ def app_spawn_model(req):
 
         resp = attach_link(model_1, link_1, model_2, link_2)
         print("Links attached!")
+	rospy.loginfo("Links attached!")
     except rospy.ServiceException as e:
         rospy.logwarn("Service call failed: {} with response code {}".format(e, resp)) #f"Service call failed: {e} with response code {resp}"
     return APPSpawnModelResponse(True)

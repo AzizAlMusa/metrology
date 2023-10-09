@@ -86,7 +86,8 @@
     <node name="transform_signal" pkg="laser_scanner_pkg" type="signal_transformer" respawn="true"/>
     <node name="concatenate_pointcloud" pkg="laser_scanner_pkg" type="aggregate_laser_scans" respawn="true"/>
 
-    <node name="pointcloud_saver_service" pkg="laser_scanner_pkg" type="save_pcl" respawn="true"/>
+    <node name="pointcloud_saver_service" pkg="laser_scanner_pkg" type="save_pcl" respawn="true" />
+    <node name="call_invert_x_service_node" pkg="laser_scanner_pkg" type="call_invert_x.py" output="screen" respawn="true"/>
     <!-- <service name="save_pointcloud_service" type="std_srvs/Trigger"/> -->
 
 

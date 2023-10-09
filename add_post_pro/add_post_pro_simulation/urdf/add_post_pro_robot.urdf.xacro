@@ -311,7 +311,7 @@
             </geometry>
         </collision>
         
-<inertial>
+        <inertial>
             <origin rpy="0 0 0" xyz="0 0 0" />
             <mass value="1" />
             <inertia ixx="100" ixy="0" ixz="0" iyy="100" iyz="0" izz="100" />
@@ -675,7 +675,7 @@
     </joint>
     <!-- <origin xyz="0 -0.0324522 -.0761366" rpy="${M_PI} ${M_PI/2} ${M_PI/2}"/> -->
     <gazebo reference="scancontrol2900-50_laser">
-        <sensor name="scancontrol" type="gpu_ray">
+        <sensor name="scancontrol" type="ray">
             <pose>0 0 0 0 0 0</pose>
             <visualize>true</visualize>
             <update_rate>40</update_rate>
@@ -694,7 +694,7 @@
                     <resolution>0.01</resolution>
                 </range>
             </ray>
-            <plugin filename="libgazebo_ros_gpu_laser.so" name="scancontrol_laser">
+            <plugin filename="libgazebo_ros_laser.so" name="scancontrol_laser">
                 <topicName>/arm/laser_scan</topicName>
                 <frameName>scancontrol2900-50_laser</frameName>
             </plugin>

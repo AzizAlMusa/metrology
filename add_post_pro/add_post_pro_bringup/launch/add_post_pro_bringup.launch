@@ -13,7 +13,7 @@
     <arg name="processing_phase" default="box"/>
     <arg name="direct_joint_control" default="false"/>
     <arg name="denso_robot" default="vs6577"/>
-    <arg name="robot_name" default="add_post_pro_robot_b120"/>
+    <arg name="robot_name" default="add_post_pro_robot"/>
     <arg name="load_robot_description" default="true"/>
     <arg name="robot_description" default="robot_description"/>
     
