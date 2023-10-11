@@ -248,6 +248,10 @@ add_executable(mesh_preprocessor src/mesh_preprocessor.cpp)
 target_link_libraries(mesh_preprocessor  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBS})
 add_dependencies(mesh_preprocessor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(view_plan src/view_plan.cpp)
-target_link_libraries(view_plan  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBS})
-add_dependencies(view_plan ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_executable(view_plan src/view_plan.cpp)
+# target_link_libraries(view_plan  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBS})
+# add_dependencies(view_plan ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(view_optimization src/view_optimization.cpp src/view_plan.cpp)
+target_link_libraries(view_optimization  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBS})
+add_dependencies(view_optimization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
