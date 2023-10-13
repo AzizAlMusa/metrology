@@ -82,6 +82,7 @@
         "regex": "cpp",
         "variant": "cpp",
         "*.inc": "cpp",
-        "*.lxx": "cpp"
+        "*.lxx": "cpp",
+        "*.ipp": "cpp"
     }
 }

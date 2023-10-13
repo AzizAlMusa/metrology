@@ -21,7 +21,10 @@ void basicViewPlanning(const std::string& file_path) {
     // Create three viewpoints with random positions and orientations
     vp.createViewpoint(1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
     vp.createViewpoint(0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
-    // vp.createViewpoint(0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
+    // vp.createViewpoint(0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
+    // vp.createViewpoint(0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
+    // vp.createViewpoint(0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
+    // vp.createViewpoint(0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
     // vp.createViewpoint(0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
     // vp.createViewpoint(-0.5, -0.5, -0.5, 0.0, 0.0, 0.0, 0.1, 1.0, 45.0);
 
@@ -36,27 +39,33 @@ void basicViewPlanning(const std::string& file_path) {
     
     // Loop through each viewpoint
     for (auto& viewpoint : viewpoints) {
-        // Record the start time
-        start_time = std::chrono::high_resolution_clock::now();
+        std::cout << "Iteration: " << index << std::endl;
+       
         // Show frustum of camera
         // vp.addCameraFrustumToRenderer(viewpoint);
-
-        // Calculate depth data
+       
         vtkSmartPointer<vtkFloatArray> depthData = vp.capture_depth_data(viewpoint);
 
+       
+
+       
         // Convert depth data to 3D world points and compute visibility
         vtkSmartPointer<vtkPoints> worldPoints = vp.convertDepthTo3D(depthData, viewpoint);
-
+        
+           // Record the start time
+        start_time = std::chrono::high_resolution_clock::now();
+        // Calculate depth data
         std::vector<int> visibleTriangles = vp.compute_visibility(viewpoint, worldPoints, index);
-
-        ++index;
-
-        //  // Record the end time
+           //  // Record the end time
         end_time = std::chrono::high_resolution_clock::now();
         // // Calculate and print the elapsed time
         std::chrono::duration<double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
         std::cout << "Elapsed time: " << elapsed_time.count() << " seconds" << std::endl;
-        
+
+        ++index;
+
+      
+        // vp.addPointCloudToRenderer(worldPoints);
         totalElapsedTime += elapsed_time.count();
         vp.showViewpointSolution(viewpoint, 0.1);
     }
@@ -64,21 +73,22 @@ void basicViewPlanning(const std::string& file_path) {
     double averageTime = totalElapsedTime / viewpoints.size();
     std::cout << "Average time: " << averageTime << " seconds" << std::endl;
         
-    vp.removeLastViewpoint();
-    vp.computeCoverageScore();
+
+
 
 
     // Compute the visibility matrix
     visibility_mat = vp.get_visibility_matrix();
 
     // Color visible triangles in the model
+    // vp.RandomizeTriangleColors();
     vp.ColorVisibleTriangles(visibility_mat);
+    // vp.ColorOverlap();
 
-    vp.computeTriangleAreas();
 
     float score = vp.computeCoverageScore();
     std::cout << score << std::endl;
-
+    vp.print_visibility_matrix();
     vp.visualizeScene();
 }
 
@@ -96,7 +106,7 @@ void greedySearch(const std::string& file_path, int maxIterations, float initial
     // Initialize variables for view planning
     float threshold = initialThreshold;
     int consecutiveIterations = 0;
-    float epsilon = 0.000001;
+    float epsilon = 0.0001;
 
     // Define random number generator for generating viewpoint positions sampled from a sphere surface
     std::random_device rd;
@@ -204,7 +214,7 @@ void greedySearch(const std::string& file_path, int maxIterations, float initial
     float finalScore = vp.computeCoverageScore();
     std::cout << "Final Coverage Score: " << finalScore << std::endl;
     std::cout << "Total viewpoints: " << vp.get_visibility_matrix().size() << std::endl;
-    vp.ColorOverlap(vp.get_visibility_matrix());
+    vp.ColorOverlap();
     vp.visualizeScene();
 }
 
@@ -216,7 +226,7 @@ int main(int argc, char** argv) {
     
     // STL file path
     std::string package_path = ros::package::getPath("depth_processing");
-    std::string stl_file_path = package_path + "/saved_models/cube_3072.stl";
+    std::string stl_file_path = package_path + "/saved_models/car_door_scaled.stl";
 
     // greedy search paramaters
     int maxIterations = 500;
@@ -225,7 +235,10 @@ int main(int argc, char** argv) {
     float minRadius = 0.75f;
     float maxRadius = 1.0f;
 
-    // greedySearch(stl_file_path, maxIterations, initialThreshold, maxConsecutiveIterations, minRadius, maxRadius);
-    basicViewPlanning(stl_file_path);
+    greedySearch(stl_file_path, maxIterations, initialThreshold, maxConsecutiveIterations, minRadius, maxRadius);
+    // basicViewPlanning(stl_file_path);
+
     return 0;
+
+
 }

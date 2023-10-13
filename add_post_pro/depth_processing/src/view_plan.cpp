@@ -896,7 +896,7 @@
     //         double distance = sqrt(vtkMath::Distance2BetweenPoints(testPoint, closestPoint));
 
     //         // Check if the distance is within the specified threshold (e.g., 0.01 units)
-    //         if (distance <= 1e-02) {
+    //         if (distance <= 1e-03) {
     //             // Add the index of the visible centroid to the list
     //             visibleCentroidIndices.push_back(id);
     //         }
@@ -935,7 +935,7 @@
         vtkSmartPointer<vtkIdList> result = vtkSmartPointer<vtkIdList>::New();
 
         // Perform radius search
-        double radius = 1e-02;  // Define your radius here
+        double radius = 2e-03;  // Define your radius here
         kdTree->FindPointsWithinRadius(radius, testPoint, result);
 
         for (vtkIdType j = 0; j < result->GetNumberOfIds(); ++j) {
@@ -957,13 +957,38 @@
 
     }
 
+    void ViewPlanning::print_visibility_matrix() {
 
+        // Assuming visibilityMatrix is a member variable of the class
+        for (int i = 0; i < visibilityMatrix.size(); ++i) {
+            for (int j = 0; j < visibilityMatrix[i].size(); ++j) {
+                // Print each element of the visibility matrix
+                std::cout << visibilityMatrix[i][j] << " ";
+            }
+            // Print a newline after each row
+            std::cout << std::endl;
+        }
+    }
+
+    void ViewPlanning::printVisibilitySums() {
+
+         // Get the sum of each column from visibility_mat
+        std::vector<int> columnSums = get_visibility_sum();
+
+        // Loop through the vector and print each element
+        for (int i = 0; i < columnSums.size(); ++i) {
+            std::cout << columnSums[i] << " ";
+        }
+
+        // Print a newline character at the end for formatting
+        std::cout << std::endl;
+    }
 
     std::vector<int>  ViewPlanning::compute_visibility(vtkSmartPointer<vtkCamera> viewpoint, vtkSmartPointer<vtkPoints> worldPoints, int viewpoint_index) {
 
         // Initialize a list of visible triangles
         std::vector<int> visibleTriangles(polydata->GetNumberOfCells());
-       
+
         // Insert and initialize a row for the current viewpoint in the visibility matrix
         visibilityMatrix.push_back(std::vector<int>(polydata->GetNumberOfCells(), 0));
 
@@ -996,7 +1021,8 @@
                 visibilityMatrix[viewpoint_index][i] = 0;
             }
         }
-        
+  
+
         // Return the list of visible triangles
         return visibleTriangles;
     }
@@ -1007,7 +1033,7 @@
 
         // Get the sum of each column from visibility_mat
         std::vector<int> columnSums = get_visibility_sum();
-
+   
         // Create a vtkUnsignedCharArray to store the colors
         vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
         colors->SetNumberOfComponents(3);  // Three components per color for RGB
@@ -1042,34 +1068,44 @@
         this->mapper->Update();
     }
 
-    void ViewPlanning::ColorOverlap(const std::vector<std::vector<int>> visibility_mat){
+    void ViewPlanning::ColorOverlap() {
+
         // Get the sum of each column from visibility_mat
         std::vector<int> columnSums = get_visibility_sum();
 
-        int maxColumnSum = 5;
-        // // Define the color range (from darkest blue to lightest blue)
-        // unsigned char minColor[3] = {0, 0, 255};  // Darkest blue
-        // unsigned char maxColor[3] = {173, 216, 230};  // Lightest blue
-      
+        // Define the color range (from gray to dark green)
+        unsigned char grayColor[3] = {128, 128, 128};  // Gray color
         // Define the color range (from darkest green to lightest green)
-        unsigned char minColor[3] = {0, 128, 0};   // Darkest green
-        unsigned char maxColor[3] = {144, 238, 144};  // Lightest green
-
+        unsigned char lightGreenColor[3] = {144, 238, 144};  // Lightest green
+        unsigned char darkGreenColor[3] = {0, 128, 0};   // Darkest green
+        int maxColumnSum = get_visibility_matrix().size() / 2;
         // Create a vtkUnsignedCharArray to store the colors
         vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
         colors->SetNumberOfComponents(3);  // Three components per color for RGB
         colors->SetName("TriangleColors");
 
         // Loop through each triangle (cell) in the PolyData
-        for(vtkIdType i = 0; i < this->polydata->GetNumberOfCells(); i++) {
+        for (vtkIdType i = 0; i < this->polydata->GetNumberOfCells(); i++) {
             unsigned char color[3];
 
-            // Calculate the shade of blue based on columnSums[i]
-            double fraction = static_cast<double>(columnSums[i]) / static_cast<double>(maxColumnSum);
+            // Check the sum for the current triangle (column)
+            if (columnSums[i] == 0) {
+                // Set gray color for sum = 0
+                color[0] = grayColor[0];
+                color[1] = grayColor[1];
+                color[2] = grayColor[2];
+            } else {
+                // Calculate the shade of green based on columnSums[i]
+                double fraction = static_cast<double>(columnSums[i]) / static_cast<double>(maxColumnSum);
 
-            // Interpolate the color between minColor and maxColor
-            for (int j = 0; j < 3; j++) {
-                color[j] = static_cast<unsigned char>(minColor[j] + fraction * (maxColor[j] - minColor[j]));
+                if (fraction > 1.0) {
+                    fraction = 1.0;
+                }
+                // Interpolate the color between minGreenColor and maxGreenColor
+                for (int j = 0; j < 3; j++) {
+                    color[j] = static_cast<unsigned char>(lightGreenColor[j] * (1 - fraction) + darkGreenColor[j] * fraction);
+                
+                }
             }
 
             // Insert the color for the current triangle
@@ -1082,7 +1118,8 @@
         // Update the mapper to reflect the new colors
         this->mapper->SetInputData(this->polydata);
         this->mapper->Update();
-        }
+    }
+
 
     void  ViewPlanning::visualizeScene() {
       
@@ -1156,6 +1193,13 @@
         renderer->AddActor(actor);
  
     }
+
+    // void  ViewPlanning::addCameraFrustumToRenderer(vtkSmartPointer<vtkCamera> camera) {
+
+        
+       
+ 
+    // }
 
     void ViewPlanning::showViewpointSolution(vtkSmartPointer<vtkCamera> camera, double scale) {
 

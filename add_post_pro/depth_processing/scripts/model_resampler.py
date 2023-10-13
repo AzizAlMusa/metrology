@@ -31,11 +31,11 @@ def save_points_as_pcd(points, filename):
             f.write(" ".join(map(str, point)) + "\n")
 
 # Load mesh from STL file
-mesh = trimesh.load_mesh("../saved_models/remesh_bell.stl")
+mesh = trimesh.load_mesh("./part.ply")
 
 # Sample 5000 points
-sampled_points = sample_points_from_mesh(mesh, 1000000)
+sampled_points = sample_points_from_mesh(mesh, 50000)
 
 # Save sampled points as a PCD file
-save_points_as_pcd(sampled_points, "../saved_models/remesh_bell.pcd")
+save_points_as_pcd(sampled_points, "./part.pcd")
 

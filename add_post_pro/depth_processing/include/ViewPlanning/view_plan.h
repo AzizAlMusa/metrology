@@ -54,6 +54,8 @@
 #include <vtkKdTreePointLocator.h>
 #include <vtkTransformFilter.h>
 #include <vtkTransform.h>
+#include <vtkAppendPolyData.h>
+#include <vtkPlaneSource.h>
 
 class ViewPlanning {
 public:
@@ -88,9 +90,11 @@ public:
     void RemoveBackFacingTriangles(vtkSmartPointer<vtkCamera> viewpoint, std::vector<int>& visibleTriangles, vtkFloatArray* cellNormals);
     void RemoveOutsideFrustumTriangles(vtkSmartPointer<vtkCamera> viewpoint, std::vector<int>& visibleTriangles);
     void computeTrianglesWithPointCloud(vtkSmartPointer<vtkPoints> worldPoints, std::vector<int>& visibleTriangles);
+    void print_visibility_matrix();
+    void printVisibilitySums();
     std::vector<int> compute_visibility(vtkSmartPointer<vtkCamera> viewpoint, vtkSmartPointer<vtkPoints> worldPoints, int viewpoint_index);
     void ColorVisibleTriangles(const std::vector<std::vector<int>> visibility_mat);
-    void ColorOverlap(const std::vector<std::vector<int>> visibility_mat);
+    void ColorOverlap();
     void visualizeScene();
     void addCameraFrustumToRenderer(vtkSmartPointer<vtkCamera> camera);
     void showViewpointSolution(vtkSmartPointer<vtkCamera> camera, double scale);

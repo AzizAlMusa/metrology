@@ -25,7 +25,7 @@ import numpy as np
 
 
 # Load the STL file
-mesh = trimesh.load_mesh('../saved_models/pump.stl')
+mesh = trimesh.load_mesh('../saved_models/bell.stl')
 
 # Step 5: Rotate the mesh around the y-axis by 90 degrees
 rotation_matrix = trimesh.transformations.rotation_matrix(np.radians(180), [1, 0, 0])
@@ -48,7 +48,7 @@ mesh.apply_translation([0, 0, -min_z])
 # Step 4: Scale it down
 # mesh.apply_scale(0.003)
 # Desired box size in meters (change this to your desired size)
-box_size = 0.10  # For a 10 cm box, or change to 0.15 for a 15 cm box
+box_size = 0.5  # For a 10 cm box, or change to 0.15 for a 15 cm box
 
 # Calculate the maximum dimension of the mesh
 max_dimension = max(mesh.extents)
@@ -60,9 +60,6 @@ scale_factor = box_size / max_dimension
 mesh.apply_scale(scale_factor)
 
 
-
-
-
 # Save the modified mesh
-mesh.export('../saved_models/modified_pump.stl')
+mesh.export('../saved_models/bell_scaled.stl')
 
