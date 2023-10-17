@@ -63,11 +63,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  GenerateViewPlan.srv
+
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -77,10 +77,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs 
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -152,6 +153,10 @@ add_executable(get_joint_solution src/get_joint_solution.cpp)
 add_executable(potato src/potato.cpp)
 
 add_executable(move_tests src/move_tests.cpp)
+
+add_executable(turntable_test src/turntable_test.cpp)
+
+add_executable(viewpoint_control src/viewpoint_control.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -171,10 +176,18 @@ target_link_libraries(get_joint_solution ${catkin_LIBRARIES})
 target_link_libraries(potato ${catkin_LIBRARIES})
 
 target_link_libraries(move_tests ${catkin_LIBRARIES})
+
+target_link_libraries(turntable_test ${catkin_LIBRARIES})
+
+target_link_libraries(viewpoint_control ${catkin_LIBRARIES})
 #############
 ## Install ##
 #############
-
+install(DIRECTORY include/${PROJECT_NAME}/
+DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+FILES_MATCHING PATTERN "*.h"
+PATTERN ".svn" EXCLUDE
+)
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 

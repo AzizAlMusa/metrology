@@ -259,3 +259,7 @@ add_dependencies(view_optimization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_
 add_executable(saliency_map src/saliency_map.cpp)
 target_link_libraries(saliency_map  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBS})
 add_dependencies(saliency_map ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(viewpoint_tests src/viewpoint_tests.cpp)
+target_link_libraries(viewpoint_tests  ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBS})
+add_dependencies(viewpoint_tests ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

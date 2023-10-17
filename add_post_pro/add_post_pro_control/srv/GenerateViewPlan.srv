@@ -1,0 +1,3 @@
+geometry_msgs/Pose[] viewpoints
+---
+bool success

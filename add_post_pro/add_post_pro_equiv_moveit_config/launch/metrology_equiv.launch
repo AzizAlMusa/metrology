@@ -32,8 +32,6 @@
   <arg name="urdf_path" default="$(find add_post_pro_robot)/urdf/add_post_pro_equiv.urdf.xacro"/>
 
   <!-- launch the gazebo simulator and spawn the robot -->
-    
- 
   <include file="$(find add_post_pro_equiv_moveit_config)/launch/gazebo.launch" >
     <arg name="paused" value="$(arg paused)"/>
     <arg name="gazebo_gui" value="$(arg gazebo_gui)"/>
@@ -88,13 +86,16 @@
   </include>
 
 
-    
+  <!-- Spawn objects on turntable in gazebo -->
   <node name="spawn_object" pkg="add_post_pro_simulation" type="spawn_object.py"/>
   <node name="create_gaz_model" pkg="add_post_pro_simulation" type="create_gaz_model.py"/>
   <!-- <node name="laser_playground" pkg="pcl_sensor_data" type="laser_playground" /> -->
 
 
-
+  <!-- NODES FOR CONTROLLING THE TURNTABLE IN AN EQUIVALENT MOTION -->
+  <node name="custom_robot_control_service" pkg="add_post_pro_control" type="viewpoint_control" output="screen" />
+  <node name="trajectory_modifier" pkg="add_post_pro_control" type="trajectory_modifier.py" />
+  <node name="trajectory_direct_control" pkg="add_post_pro_control" type="modified_control.py" />
 
   <!-- <arg name="x" default="-0.01"/>
   <arg name="y" default="0"/>
