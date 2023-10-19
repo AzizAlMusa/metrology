@@ -4,7 +4,7 @@
   <arg name="pipeline" default="ompl" />
   <!-- By default, we do not start a database (it can be large) -->
   <arg name="db" default="false" />
-  <!-- Allow user to specify database location -->
+  <!-- Allow the user to specify the database location -->
   <arg name="db_path" default="$(find add_post_pro_equiv_moveit_config)/default_warehouse_mongo_db" />
 
   <!-- By default, we are not in debug mode -->
@@ -12,50 +12,42 @@
 
   <!-- By default, we won't load or override the robot_description
   <arg name="load_robot_description" default="true"/> -->
-   <env name="GAZEBO_MODEL_PATH" value="$(find add_post_pro_simulation)/gazebo_models/"/>
-  <!--
-  By default, hide joint_state_publisher's GUI
+  <env name="GAZEBO_MODEL_PATH" value="$(find add_post_pro_simulation)/gazebo_models/"/>
 
-  MoveIt!'s "demo" mode replaces the real robot driver with the joint_state_publisher.
-  The latter one maintains and publishes the current joint configuration of the simulated robot.
-  It also provides a GUI to move the simulated robot around "manually".
-  This corresponds to moving around the real robot without the use of MoveIt.
-  -->
-  <param name="robot_description" command="xacro  '$(find add_post_pro_robot)/urdf/$(arg robot_name).urdf.xacro'"/>
+  <!-- Conditionally start Gazebo based on a parameter -->
+  <group if="$(arg gazebo_enabled)">
+    <!-- Gazebo specific options -->
+    <arg name="gazebo_gui" default="true"/>
+    <arg name="paused" default="false"/>
+    <!-- By default, use the URDF location provided from the package -->
+    <arg name="urdf_path" default="$(find add_post_pro_robot)/urdf/add_post_pro_equiv.urdf.xacro"/>
 
-  <arg name="use_gui" default="false" />
-
-  <!-- Gazebo specific options -->
-  <arg name="gazebo_gui" default="true"/>
-  <arg name="paused" default="false"/>
-  <!-- By default, use the urdf location provided from the package -->
-  <arg name="urdf_path" default="$(find add_post_pro_robot)/urdf/add_post_pro_equiv.urdf.xacro"/>
-
-  <!-- launch the gazebo simulator and spawn the robot -->
-  <include file="$(find add_post_pro_equiv_moveit_config)/launch/gazebo.launch" >
-    <arg name="paused" value="$(arg paused)"/>
-    <arg name="gazebo_gui" value="$(arg gazebo_gui)"/>
-    <arg name="urdf_path" value="$(arg urdf_path)"/>
-    <arg name="world_path" default="$(find add_post_pro_simulation)/world/metrology.world"/>
-  </include>
+    <!-- Launch the gazebo simulator and spawn the robot -->
+    <include file="$(find add_post_pro_equiv_moveit_config)/launch/gazebo.launch" >
+      <arg name="paused" value="$(arg paused)"/>
+      <arg name="gazebo_gui" value="$(arg gazebo_gui)"/>
+      <arg name="urdf_path" value="$(arg urdf_path)"/>
+      <arg name="world_path" default="$(find add_post_pro_simulation)/world/metrology.world"/>
+    </include>
+  </group>
 
   <!-- If needed, broadcast static tf for robot root -->
-  <!-- Load the URDF, SRDF and other .yaml configuration files on the param server -->
+  <!-- Load the URDF, SRDF, and other .yaml configuration files on the param server -->
   <include file="$(find add_post_pro_equiv_moveit_config)/launch/planning_context.launch">
     <arg name="load_robot_description" value="false"/>
   </include>
 
   <!-- We do not have a robot connected, so publish fake joint states -->
-   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-        <param name="use_gui" value="false"/>
-        <param name="publish_frequency" type="double" value="125.0" />
-        <rosparam param="source_list" subst_value = "true">[/$(arg robot_name)/joint_states]</rosparam>
-    </node>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="false"/>
+    <param name="publish_frequency" type="double" value="125.0" />
+    <rosparam param="source_list" subst_value="true">[/$(arg robot_name)/joint_states]</rosparam>
+  </node>
 
   <!-- Given the published joint states, publish tf for the robot links -->
-   <node name="robot_state_publisher" pkg="robot_state_publisher" 
-          type="robot_state_publisher" respawn="false" output="screen">
-      <remap from="/joint_states" to="/$(arg robot_name)/joint_states" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" 
+    type="robot_state_publisher" respawn="false" output="screen">
+    <remap from="/joint_states" to="/$(arg robot_name)/joint_states" />
   </node>
 
   <!-- Run the main MoveIt! executable without trajectory execution (we do not have controllers configured by default) -->
@@ -75,24 +67,27 @@
     <arg name="debug" value="$(arg debug)"/>
   </include>
 
-   <!--Controllers for GAZEBO-->
-  <rosparam file="$(find add_post_pro_equiv_moveit_config)/config/add_post_pro_controllers.yaml" command="load"/>
-  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
-    ns="/$(arg robot_name)" args="joint_state_controller arm_controller turntable_controller" />
+  <!-- Controllers for GAZEBO -->
+  <group if="$(arg gazebo_enabled)">
+    <rosparam file="$(find add_post_pro_equiv_moveit_config)/config/add_post_pro_controllers.yaml" command="load"/>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+      ns="/$(arg robot_name)" args="joint_state_controller arm_controller turntable_controller" />
+  </group>
 
-  <!-- If database loading was enabled, start mongodb as well -->
-  <include file="$(find add_post_pro_equiv_moveit_config)/launch/default_warehouse_db.launch" if="$(arg db)">
-    <arg name="moveit_warehouse_database_path" value="$(arg db_path)"/>
-  </include>
+  <!-- If database loading was enabled, start MongoDB as well -->
+  <group if="$(arg db)">
+    <include file="$(find add_post_pro_equiv_moveit_config)/launch/default_warehouse_db.launch">
+      <arg name="moveit_warehouse_database_path" value="$(arg db_path)"/>
+    </include>
+  </group>
 
+  <!-- Spawn objects on turntable in Gazebo -->
+  <group if="$(arg gazebo_enabled)">
+    <node name="spawn_object" pkg="add_post_pro_simulation" type="spawn_object.py"/>
+    <node name="create_gaz_model" pkg="add_post_pro_simulation" type="create_gaz_model.py"/>
+  </group>
 
-  <!-- Spawn objects on turntable in gazebo -->
-  <node name="spawn_object" pkg="add_post_pro_simulation" type="spawn_object.py"/>
-  <node name="create_gaz_model" pkg="add_post_pro_simulation" type="create_gaz_model.py"/>
-  <!-- <node name="laser_playground" pkg="pcl_sensor_data" type="laser_playground" /> -->
-
-
-  <!-- NODES FOR CONTROLLING THE TURNTABLE IN AN EQUIVALENT MOTION -->
+  <!-- Nodes for controlling the turntable in an equivalent motion -->
   <node name="custom_robot_control_service" pkg="add_post_pro_control" type="viewpoint_control" output="screen" />
   <node name="trajectory_modifier" pkg="add_post_pro_control" type="trajectory_modifier.py" />
   <node name="trajectory_direct_control" pkg="add_post_pro_control" type="modified_control.py" />

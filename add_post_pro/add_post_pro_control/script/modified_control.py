@@ -25,12 +25,13 @@ def turntable_callback(data):
 def execute_synchronized_motion():
     global arm_trajectory, turntable_trajectory
 
+
     if arm_trajectory is not None and turntable_trajectory is not None:
 
         # Initialize SimpleActionClients
         arm_client = SimpleActionClient('/add_post_pro_equiv/arm_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         turntable_client = SimpleActionClient('/add_post_pro_equiv/turntable_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-
+      
         # Wait for servers to be ready
         arm_client.wait_for_server()
         turntable_client.wait_for_server()

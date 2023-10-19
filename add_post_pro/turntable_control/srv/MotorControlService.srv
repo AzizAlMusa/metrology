@@ -1,0 +1,4 @@
+# MotorControlService.srv
+turntable_control/MotorControl request
+---
+bool response
