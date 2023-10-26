@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import rospy
 import actionlib
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal, FollowJointTrajectoryResult
@@ -54,21 +55,21 @@ def main():
     rospy.init_node('moveit_arduino_bridge')
 
     action_server = actionlib.ActionServer(
-        '/add_post_pro_equiv/turntable_controller/follow_joint_trajectory',
+        '/physical_turntable/turntable_controller/follow_joint_trajectory',
         FollowJointTrajectoryAction,
         on_goal,
         auto_start=False
     )
 
-    action_server_dummy = actionlib.ActionServer(
-        '/add_post_pro_equiv/arm_controller/follow_joint_trajectory',
-        FollowJointTrajectoryAction,
-        on_goal_dummy,
-        auto_start=False
-    )
+    # action_server_dummy = actionlib.ActionServer(
+    #     '/add_post_pro_equiv/arm_controller/follow_joint_trajectory',
+    #     FollowJointTrajectoryAction,
+    #     on_goal_dummy,
+    #     auto_start=False
+    # )
 
     action_server.start()
-    action_server_dummy.start()
+    # action_server_dummy.start()
 
     rospy.spin()
 

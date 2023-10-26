@@ -76,7 +76,7 @@ public:
         visual_tools.trigger();
         visual_tools.prompt("Press next to execute.");
 
-        // move_group_interface.execute(trajectory);
+        move_group_.execute(trajectory);
         return trajectory;
     }
 
