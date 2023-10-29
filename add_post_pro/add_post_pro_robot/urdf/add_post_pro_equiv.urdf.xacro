@@ -18,5 +18,6 @@
 		<origin xyz="0 -${turntable_offset} 0.16" rpy="0 0 0"/>
     </turntable>
 
-    <xacro:include filename="$(find add_post_pro_robot)/urdf/multisensor_holder.urdf.xacro"/>
+    <!-- <xacro:include filename="$(find add_post_pro_robot)/urdf/multisensor_holder.urdf.xacro"/> -->
+    <xacro:include filename="$(find add_post_pro_robot)/urdf/l515_mount.urdf.xacro"/> 
 </robot>

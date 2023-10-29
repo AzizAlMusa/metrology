@@ -85,8 +85,39 @@ public:
     {   
         std::cout << "Trajectory request received, computing now..." << std::endl;
         std::vector<geometry_msgs::Pose> viewpoints = req.viewpoints;
-        moveit_msgs::RobotTrajectory trajectory = computeTrajectory(viewpoints);
-        trajectory_publisher_.publish(trajectory);
+        // moveit_msgs::RobotTrajectory trajectory = computeTrajectory(viewpoints);
+        // trajectory_publisher_.publish(trajectory);
+
+
+        // Make segments from the viewpoints for stop and scan
+        std::vector<std::vector<geometry_msgs::Pose>> segments;
+        for (size_t i = 1; i < viewpoints.size(); ++i) {
+            std::vector<geometry_msgs::Pose> segment;
+            segment.push_back(viewpoints[i - 1]);
+            segment.push_back(viewpoints[i]);
+            segments.push_back(segment);
+        }
+
+        // go to next viewpoint and scan
+        for (size_t i = 0; i < segments.size(); ++i)
+        {
+            // Compute trajectory for the current segment
+            moveit_msgs::RobotTrajectory trajectory = computeTrajectory(segments[i]);
+            trajectory_publisher_.publish(trajectory);
+
+            // Stop and perform arbitrary function (e.g., take a measurement)
+            // Add your code for the arbitrary function here
+
+            if (i < segments.size() - 1)
+            {
+                // If there are more segments, prompt for the next movement
+                std::cout << "Press Enter to continue to the next segment..." << std::endl;
+                std::cin.ignore();
+            }
+        }
+
+
+
         
         // Set res.success to true explicitly
         res.success = true;

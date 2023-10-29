@@ -24,6 +24,15 @@ catkin_package()
 set(IKFAST_LIBRARY_NAME add_post_pro_equiv_arm_moveit_ikfast_plugin)
 add_library(${IKFAST_LIBRARY_NAME} src/add_post_pro_equiv_arm_ikfast_moveit_plugin.cpp)
 target_link_libraries(${IKFAST_LIBRARY_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
+
+## BEGINNING OF CUSTOM NODE
+# Compile your custom node
+add_executable(ikfast_playground src/ikfast_playground.cpp)
+
+# Link your custom node against the existing IKFast library
+target_link_libraries(ikfast_playground ${IKFAST_LIBRARY_NAME} ${catkin_LIBRARIES})
+## END OF CUSTOM NODE
+
 # suppress warnings about unused variables in OpenRave's solver code
 target_compile_options(${IKFAST_LIBRARY_NAME} PRIVATE -Wno-unused-variable -Wno-unused-parameter)
 

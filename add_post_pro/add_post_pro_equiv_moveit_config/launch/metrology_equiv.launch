@@ -93,12 +93,12 @@
   <node name="trajectory_direct_control" pkg="add_post_pro_control" type="modified_control.py" />
 
   <!-- Node for controlling the physical turntable-->
-  <node name="moveit_arduino_bridge" pkg="turntable_control" type="turntable_control_driver.py" output="screen"/>
+  <!-- <node name="moveit_arduino_bridge" pkg="turntable_control" type="turntable_control_driver.py" output="screen"/> -->
   
   <!-- Run the Bash script to detect the serial port and run arduino node --> 
-  <node name="rosserial_node" pkg="rosserial_python" type="serial_node.py" output="screen">
+  <!-- <node name="rosserial_node" pkg="rosserial_python" type="serial_node.py" output="screen">
     <param name="port" command="$(find turntable_control)/scripts/detect_serial_port.sh" />
-  </node>
+  </node> -->
 
   <!-- <arg name="x" default="-0.01"/>
   <arg name="y" default="0"/>
