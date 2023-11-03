@@ -13,7 +13,7 @@
 
     <xacro:include filename="$(find add_post_pro_robot)/urdf/turntable_equiv.urdf.xacro"/>
 
-    <!-- Create camera instance --> -->
+    <!-- Create camera instance --> 
     <turntable parent="world">
 		<origin xyz="0 -${turntable_offset} 0.16" rpy="0 0 0"/>
     </turntable>

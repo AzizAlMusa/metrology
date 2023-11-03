@@ -63,7 +63,7 @@ public:
        
                 
                 // Perform the visualization
-                visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel("true_laser"), joint_model_group, rvt::LIME_GREEN);
+                visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel("camera_depth_optical_frame"), joint_model_group, rvt::LIME_GREEN);
                 
                 for (std::size_t i = 0; i < waypoints.size(); ++i) {
                     visual_tools.publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);

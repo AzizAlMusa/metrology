@@ -9,17 +9,17 @@
   <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro  '$(find add_post_pro_robot)/urdf/add_post_pro_equiv.urdf.xacro'"/>
 
   <!-- The semantic description that corresponds to the URDF -->
-  <!-- <param name="$(arg robot_description)_semantic" textfile="$(find add_post_pro_equiv_moveit_config)/config/add_post_pro_equiv.srdf" /> -->
   <param name="$(arg robot_description)_semantic" textfile="$(find arm_depth_moveit)/config/add_post_pro_equiv.srdf" />
+
   <!-- Load updated joint limits (override information from URDF) -->
   <group ns="$(arg robot_description)_planning">
-    <rosparam command="load" file="$(find add_post_pro_equiv_moveit_config)/config/joint_limits.yaml"/>
-    <rosparam command="load" file="$(find add_post_pro_equiv_moveit_config)/config/cartesian_limits.yaml"/>
+    <rosparam command="load" file="$(find arm_depth_moveit)/config/joint_limits.yaml"/>
+    <rosparam command="load" file="$(find arm_depth_moveit)/config/cartesian_limits.yaml"/>
   </group>
 
   <!-- Load default settings for kinematics; these settings are overridden by settings in a node's namespace -->
   <group ns="$(arg robot_description)_kinematics">
-    <rosparam command="load" file="$(find add_post_pro_equiv_moveit_config)/config/kinematics.yaml"/>
+    <rosparam command="load" file="$(find arm_depth_moveit)/config/kinematics.yaml"/>
 
   </group>
 

@@ -163,8 +163,8 @@ class IKFastKinematicsPlugin : public kinematics::KinematicsBase
 
   // The ikfast and base frame are the start and end of the kinematic chain for which the
   // IKFast analytic solution was generated.
-  const std::string IKFAST_TIP_FRAME_ = "true_laser";
-  const std::string IKFAST_BASE_FRAME_ = "table_link";
+  const std::string IKFAST_TIP_FRAME_ = "camera_depth_optical_frame";
+  const std::string IKFAST_BASE_FRAME_ = "world";
 
   // prefix added to tip- and baseframe to allow different namespaces or multi-robot setups
   std::string link_prefix_;
