@@ -62,12 +62,11 @@ find_package(catkin REQUIRED COMPONENTS
 #   Message2.msg
 # )
 
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+## Generate services in the 'srv' folder 
+add_service_files(
+  FILES
+  GenerateViewPlan.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -77,10 +76,11 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   std_msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   geometry_msgs
+   std_msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -162,6 +162,11 @@ include_directories(
 #############
 ## Install ##
 #############
+install(DIRECTORY include/${PROJECT_NAME}/
+DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+FILES_MATCHING PATTERN "*.h"
+PATTERN ".svn" EXCLUDE
+)
 
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
@@ -215,3 +220,10 @@ include_directories(
 # catkin_add_nosetests(test)
 add_executable(get_joint_solution src/get_joint_solution.cpp) 
 target_link_libraries(get_joint_solution ${catkin_LIBRARIES})
+
+add_executable(viewpoint_control src/viewpoint_control)
+target_link_libraries(viewpoint_control ${catkin_LIBRARIES})
+
+add_executable(control_test src/control_test)
+target_link_libraries(control_test ${catkin_LIBRARIES})
+
