@@ -1,17 +1,16 @@
 <launch>
 
-<arg name="ip_address" default="192.168.1.110" />
-
-    <!-- If you want to change send and recieve format of denso_robot_control, -->
-    <!-- you can specify the send_format and recv_format parameters -->
-    <arg name="send_format" default="288" />
-    <arg name="recv_format" default="292" />
-    <arg name="denso_robot" default="vs6577"/>
-    <arg name="live_robot_name" default="add_post_pro_robot_b120"/>      Change default for different environments
-    <arg name="config_name" default="$(find add_post_pro_bringup)/rviz/add_post_pro_default.rviz"/>
-    <arg name="load_robot_description" default="true"/>
-    <arg name="robot_description" default="robot_description"/>
-    <arg name="bcap_slave_control_cycle_msec" default="8" />
+  <arg name="ip_address" default="192.168.1.110" />
+  <!-- If you want to change send and recieve format of denso_robot_control, -->
+  <!-- you can specify the send_format and recv_format parameters -->
+  <arg name="send_format" default="288" />
+  <arg name="recv_format" default="292" />
+  <arg name="denso_robot" default="vs6577"/>
+  <arg name="live_robot_name" default="add_post_pro_robot_b120"/>     <!-- Change default for different environments-->
+  <arg name="config_name" default="$(find add_post_pro_bringup)/rviz/add_post_pro_default.rviz"/>
+  <arg name="load_robot_description" default="true"/>
+  <arg name="robot_description" default="robot_description"/>
+  <arg name="bcap_slave_control_cycle_msec" default="8" />
 
   <arg name="direct_joint_control" default="false"/>
   <arg name="robot_name" default="add_post_pro_equiv" />
@@ -147,5 +146,5 @@
   <node name="trajectory_modifier" pkg="add_post_pro_control" type="trajectory_modifier.py" />
   <node name="trajectory_direct_control" pkg="add_post_pro_control" type="modified_control.py" />
 
-  
+
 </launch>

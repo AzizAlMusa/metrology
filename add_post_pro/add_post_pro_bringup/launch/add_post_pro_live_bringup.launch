@@ -2,7 +2,6 @@
 <launch>
 
     <arg name="ip_address" default="192.168.1.110" />
-
     <!-- If you want to change send and recieve format of denso_robot_control, -->
     <!-- you can specify the send_format and recv_format parameters -->
     <arg name="send_format" default="288" />
@@ -82,12 +81,15 @@
     </include> 
 
 <!-- Scan control launch-->
-    <include file="$(find micro_epsilon_scancontrol_driver)/launch/load_driver.launch"/>
+    <!-- <include file="$(find micro_epsilon_scancontrol_driver)/launch/load_driver.launch"/>
     <node name="transform_signal" pkg="laser_scanner_pkg" type="signal_transformer" respawn="true"/>
     <node name="concatenate_pointcloud" pkg="laser_scanner_pkg" type="aggregate_laser_scans" respawn="true"/>
 
     <node name="pointcloud_saver_service" pkg="laser_scanner_pkg" type="save_pcl" respawn="true" />
     <node name="call_invert_x_service_node" pkg="laser_scanner_pkg" type="call_invert_x.py" output="screen" respawn="true"/>
+     -->
+    
+    
     <!-- <service name="save_pointcloud_service" type="std_srvs/Trigger"/> -->
 
 

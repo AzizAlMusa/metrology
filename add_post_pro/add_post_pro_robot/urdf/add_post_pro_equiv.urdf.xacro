@@ -13,9 +13,9 @@
 
     <xacro:include filename="$(find add_post_pro_robot)/urdf/turntable_equiv.urdf.xacro"/>
 
-    <!-- Create camera instance --> -->
-    <turntable parent="world">
-		<origin xyz="0 -${turntable_offset} 0.16" rpy="0 0 0"/>
+    <!-- Create camera instance -->
+    <turntable parent="world" base_height="0.062" plate_height="0.006" plate_radius="0.250">
+        <origin xyz="0 -${turntable_offset} 0.16" rpy="0 0 0"/>
     </turntable>
 
     <xacro:include filename="$(find add_post_pro_robot)/urdf/multisensor_holder.urdf.xacro"/>

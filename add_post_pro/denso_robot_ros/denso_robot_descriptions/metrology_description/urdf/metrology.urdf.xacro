@@ -38,7 +38,7 @@
 	<link name="proxy_link">
 		<visual>
 		<!-- change y here to length /2 -->
-			<origin rpy="0 1.570796 1.570796" xyz="0 ${turntable_offset/2} 0"/>
+			<origin rpy="0 1.570796 1.570796" xyz="0 -${turntable_offset/2} 0"/>
 			<geometry>
 			<!-- change length here -->
 				 <cylinder length="${turntable_offset}" radius="0.05"/>
@@ -239,7 +239,7 @@
 		<parent link="proxy_link"/>
 		<child link="base_link"/>
 		<!-- Here change length -->
-		<origin xyz="0 ${turntable_offset} 0"/> 
+		<origin xyz="0 -${turntable_offset} 0"/> 
 	</joint>
 
 	<joint name="joint_1" type="revolute">

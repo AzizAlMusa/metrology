@@ -1,18 +1,18 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:macro name="turntable" params="parent *origin">
+    <xacro:macro name="turntable" params="parent *origin base_height plate_height plate_radius">
         <link name="turntable_base">
             <visual>
                 <origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-                    <cylinder length=".32" radius=".02" />
+                    <cylinder length="${base_height}" radius=".02" />
                 </geometry>
             </visual>
             <collision>
                 <origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-                    <cylinder length=".32" radius=".02" />
+                    <cylinder length="${base_height}" radius=".02" />
                 </geometry>
             </collision>
             
@@ -27,16 +27,16 @@
             <visual>
                 <origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-                    <cylinder length=".01" radius=".15" />
+                    <cylinder length="${plate_height}" radius="${plate_radius}" />
                 </geometry>
-                <material name="Red">
-                    <color rgba="1.0 0 0 1.0" />
+                <material name="DarkGray">
+                    <color rgba="0.1 0.1 0.1 1.0" />
                 </material>
             </visual>
             <collision>
                 <origin rpy="0 0 0" xyz="0 0 0" />
                 <geometry>
-                    <cylinder length=".01" radius=".15" />
+                    <cylinder length="${plate_height}" radius="${plate_radius}" />
                 </geometry>
             </collision>
             
@@ -52,12 +52,12 @@
             <parent link="${parent}"/>
             <child link="turntable_base" />
             <!-- <xacro:insert_block name="origin"/> -->
-            <origin rpy="0 0 0" xyz="0 0 0.16" />
+            <origin rpy="0 0 0" xyz="0 0 0${base_height/2}" />
         </joint>
         <joint name="turntable_revolve_joint" type="continuous">
             <parent link="turntable_base" />
             <child link="turntable_plate" />
-            <origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 .16" />
+            <origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 ${base_height/2}" />
             <!-- <limit effort="1000.0" lower="-6.28" upper="6.28" velocity="0.5"/> -->
             <limit effort="1000.0" velocity="10" /> 
             <axis xyz="0 0 1" />
