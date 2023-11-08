@@ -5,9 +5,9 @@ moveit_config_pkg=add_post_pro_equiv_moveit_config
 robot_name=add_post_pro_equiv
 planning_group_name=arm
 ikfast_plugin_pkg=add_post_pro_equiv_arm_ikfast_plugin
-base_link_name=table_link
+base_link_name=world
 eef_link_name=true_laser
-ikfast_output_path=/home/abdulaziz/addpost_ws/src/add_post_pro_equiv_arm_ikfast_plugin/src/add_post_pro_equiv_arm_ikfast_solver.cpp
+ikfast_output_path=/home/abdulaziz/ros_workspace/metrology/src/add_post_pro_equiv_arm_ikfast_plugin/src/add_post_pro_equiv_arm_ikfast_solver.cpp
 
 rosrun moveit_kinematics create_ikfast_moveit_plugin.py\
   --search_mode=$search_mode\

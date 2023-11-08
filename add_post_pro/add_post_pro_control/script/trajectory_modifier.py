@@ -11,9 +11,10 @@ def callback(data):
     arm_robot_trajectory = RobotTrajectory()
     turntable_robot_trajectory = RobotTrajectory()
     
-    arm_robot_trajectory.joint_trajectory = copy.deepcopy(original_trajectory)
+    # Assuming there are at least 6 joints, extract the names of the last 6 joints
+    arm_robot_trajectory.joint_trajectory.joint_names = original_trajectory.joint_names[-6:]
     
-    arm_robot_trajectory.joint_trajectory.joint_names = original_trajectory.joint_names
+
     
     turntable_robot_trajectory.joint_trajectory.joint_names = ["turntable_revolve_joint"]
     
@@ -21,21 +22,17 @@ def callback(data):
         
         index_joint_0 = original_trajectory.joint_names.index("joint_0")
         
-        # Create new lists from tuples and modify them
-        new_positions = list(point.positions)
-        new_velocities = list(point.velocities)
-        new_accelerations = list(point.accelerations)
+         # Create a new point for the arm trajectory, deep copying only necessary to avoid reference issues
+        arm_point = copy.deepcopy(point)
         
-        # Make joint_0 stationary for arm
-        new_positions[index_joint_0] = 0.0
-        new_velocities[index_joint_0] = 0.0
-        new_accelerations[index_joint_0] = 0.0
+        # Extract the positions, velocities, and accelerations of the last 6 joints
+        arm_point.positions = point.positions[-6:]
+        arm_point.velocities = point.velocities[-6:] if point.velocities else []  # Check if velocities exist
+        arm_point.accelerations = point.accelerations[-6:] if point.accelerations else []  # Check if accelerations exist
         
-        # Reassign the modified lists back to the arm trajectory
-        arm_robot_trajectory.joint_trajectory.points[i].positions = tuple(new_positions)
-        arm_robot_trajectory.joint_trajectory.points[i].velocities = tuple(new_velocities)
-        arm_robot_trajectory.joint_trajectory.points[i].accelerations = tuple(new_accelerations)
-        
+        # Append this new point to the arm trajectory
+        arm_robot_trajectory.joint_trajectory.points.append(arm_point)
+
         # Create new point for the turntable trajectory
         turntable_point = copy.deepcopy(point)
         

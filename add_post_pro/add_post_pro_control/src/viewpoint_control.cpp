@@ -64,7 +64,7 @@ public:
                 
                 // Perform the visualization
                 visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel(joint_model_group->getLinkModelNames().back()), joint_model_group, rvt::LIME_GREEN);
-                
+                // visual_tools.publishTrajectoryLine(trajectory, joint_model_group->getLinkModel("true_laser"), joint_model_group, rvt::LIME_GREEN);
                 for (std::size_t i = 0; i < waypoints.size(); ++i) {
                     visual_tools.publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
                 }
@@ -76,7 +76,7 @@ public:
         visual_tools.trigger();
         visual_tools.prompt("Press next to execute.");
 
-        move_group_.execute(trajectory);
+        // move_group_.execute(trajectory);
         return trajectory;
     }
 
