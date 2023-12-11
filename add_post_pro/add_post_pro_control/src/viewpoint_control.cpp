@@ -5,6 +5,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <add_post_pro_control/GenerateViewPlan.h>
+#include <eigen_conversions/eigen_msg.h>
 
 namespace rvt = rviz_visual_tools;
 
@@ -81,45 +82,41 @@ public:
     }
 
     bool executeTrajectory(add_post_pro_control::GenerateViewPlan::Request& req,
-                          add_post_pro_control::GenerateViewPlan::Response& res)
+                        add_post_pro_control::GenerateViewPlan::Response& res)
     {   
         std::cout << "Trajectory request received, computing now..." << std::endl;
         std::vector<geometry_msgs::Pose> viewpoints = req.viewpoints;
-        // moveit_msgs::RobotTrajectory trajectory = computeTrajectory(viewpoints);
-        // trajectory_publisher_.publish(trajectory);
 
+        // Iterate over each viewpoint
+        for (size_t i = 0; i < viewpoints.size(); ++i) {
+            // Retrieve the robot's current state
+            moveit::core::RobotState start_state(*move_group_.getCurrentState());
+            const robot_state::JointModelGroup* joint_model_group = start_state.getJointModelGroup("arm");
 
-        // Make segments from the viewpoints for stop and scan
-        std::vector<std::vector<geometry_msgs::Pose>> segments;
-        for (size_t i = 1; i < viewpoints.size(); ++i) {
+            // Get the current pose of the robot
+            Eigen::Isometry3d eigen_pose = start_state.getGlobalLinkTransform(joint_model_group->getLinkModel(joint_model_group->getLinkModelNames().back()));
+
+            // Convert Eigen pose to ROS Pose
+            geometry_msgs::Pose current_pose;
+            tf::poseEigenToMsg(eigen_pose, current_pose);
+
+            // Create a segment from the current position to the current viewpoint
             std::vector<geometry_msgs::Pose> segment;
-            segment.push_back(viewpoints[i - 1]);
-            segment.push_back(viewpoints[i]);
-            segments.push_back(segment);
-        }
+            segment.push_back(current_pose); // Current robot position
+            segment.push_back(viewpoints[i]); // Target viewpoint
 
-        // go to next viewpoint and scan
-        for (size_t i = 0; i < segments.size(); ++i)
-        {
-            // Compute trajectory for the current segment
-            moveit_msgs::RobotTrajectory trajectory = computeTrajectory(segments[i]);
+            // Set the start state for the move group
+            move_group_.setStartState(start_state);
+
+            // Compute and execute the trajectory for the current segment
+            moveit_msgs::RobotTrajectory trajectory = computeTrajectory(segment);
             trajectory_publisher_.publish(trajectory);
 
-            // Stop and perform arbitrary function (e.g., take a measurement)
-            // Add your code for the arbitrary function here
-
-            if (i < segments.size() - 1)
-            {
-                // If there are more segments, prompt for the next movement
-                std::cout << "Press Enter to continue to the next segment..." << std::endl;
-                std::cin.ignore();
-            }
+            // Wait for user input or a signal to continue
+            std::cout << "Press Enter to continue to the next segment..." << std::endl;
+            std::cin.ignore();
         }
 
-
-
-        
-        // Set res.success to true explicitly
         res.success = true;
         return true;
     }

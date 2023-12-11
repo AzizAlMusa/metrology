@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: add_post_pro_robot
+    relative_path: urdf/metrology_depth_camera.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/metrology_depth_camera_robot.srdf
+  CONFIG:
+    author_name: Abdulaziz Almusa
+    author_email: aalmusa@andrew.cmu.edu
+    generated_timestamp: 1699025732

@@ -37,4 +37,5 @@
     <xacro:sensor_l515 parent="l515_mount" use_nominal_extrinsics="$(arg use_nominal_extrinsics)" add_plug="$(arg add_plug)" use_mesh="$(arg use_mesh)">
         <origin xyz="0 0.024 0.02965" rpy="${M_PI} 0 ${M_PI/2}"/>
     </xacro:sensor_l515>
+
 </robot>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="add_post_pro_robot_l515" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:arg name="sim" default="True" />
+
+    <xacro:property name="turntable_offset" value="0.913"/>
+
+    <gazebo>
+        <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
+            <robotNamespace>/add_post_pro_robot_l515</robotNamespace>
+        </plugin>
+    </gazebo>
+    <xacro:include filename="$(find denso_robot_descriptions)/metrology_description/urdf/metrology.urdf.xacro"/>
+
+    <xacro:include filename="$(find add_post_pro_robot)/urdf/turntable_equiv.urdf.xacro"/>
+
+    <!-- Create camera instance --> 
+    <turntable parent="world" base_height="0.062" plate_height="0.006" plate_radius="0.250">
+		<origin xyz="0 -${turntable_offset} 0.16" rpy="0 0 0"/>
+    </turntable>
+
+    <xacro:include filename="$(find add_post_pro_robot)/urdf/l515_mount.urdf.xacro"/> 
+</robot>
