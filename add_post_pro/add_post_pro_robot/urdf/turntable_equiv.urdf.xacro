@@ -52,7 +52,7 @@
             <parent link="${parent}"/>
             <child link="turntable_base" />
             <!-- <xacro:insert_block name="origin"/> -->
-            <origin rpy="0 0 0" xyz="0 0 0${base_height/2}" />
+            <origin rpy="0 0 0" xyz="0 0 ${base_height/2}" />
         </joint>
         <joint name="turntable_revolve_joint" type="continuous">
             <parent link="turntable_base" />

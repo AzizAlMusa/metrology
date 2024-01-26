@@ -10,14 +10,14 @@ class JointStateController:
         rospy.init_node('joint_state_controller')
 
         # Initialize action client
-        self.client = actionlib.SimpleActionClient(
-            '/add_post_pro_equiv/arm_controller/follow_joint_trajectory',
-            FollowJointTrajectoryAction
-        )
         # self.client = actionlib.SimpleActionClient(
-        #     '/add_post_pro_robot_l515/arm_controller/follow_joint_trajectory',
+        #     '/add_post_pro_equiv/arm_controller/follow_joint_trajectory',
         #     FollowJointTrajectoryAction
         # )
+        self.client = actionlib.SimpleActionClient(
+            '/add_post_pro_robot_l515/arm_controller/follow_joint_trajectory',
+            FollowJointTrajectoryAction
+        )
         
         self.client.wait_for_server()
 

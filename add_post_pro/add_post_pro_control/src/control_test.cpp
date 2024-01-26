@@ -176,25 +176,25 @@ int main(int argc, char** argv)
     double circle_radius = 0.5;
     int num_waypoints = 8;
 
-    // // Calculate and create the waypoints
-    // std::vector<geometry_msgs::Pose> waypoints;
-    // for (int i = 0; i < num_waypoints; ++i)
-    // {
-    //     double angle = 2.0 * M_PI * static_cast<double>(i) / static_cast<double>(num_waypoints);
-    //     geometry_msgs::PoseStamped waypoint = calculateCircleWaypoint(circle_radius, angle);
-    //     req.viewpoints.push_back(waypoint.pose);
-    // }
-
-    // Generate sphere poses
-    int num_sphere_waypoints = 10; // Number of waypoints
-    double sphere_radius = 0.5; // Sphere radius
-    std::vector<geometry_msgs::PoseStamped> sphere_waypoints = generateSpherePoses(num_sphere_waypoints, sphere_radius);
-
-    // Add the sphere waypoints to the request
-    for (auto& waypoint : sphere_waypoints)
+    // Calculate and create the waypoints
+    std::vector<geometry_msgs::Pose> waypoints;
+    for (int i = 0; i < num_waypoints; ++i)
     {
+        double angle = 2.0 * M_PI * static_cast<double>(i) / static_cast<double>(num_waypoints);
+        geometry_msgs::PoseStamped waypoint = calculateCircleWaypoint(circle_radius, angle);
         req.viewpoints.push_back(waypoint.pose);
     }
+
+    // // Generate sphere poses
+    // int num_sphere_waypoints = 10; // Number of waypoints
+    // double sphere_radius = 0.5; // Sphere radius
+    // std::vector<geometry_msgs::PoseStamped> sphere_waypoints = generateSpherePoses(num_sphere_waypoints, sphere_radius);
+
+    // // Add the sphere waypoints to the request
+    // for (auto& waypoint : sphere_waypoints)
+    // {
+    //     req.viewpoints.push_back(waypoint.pose);
+    // }
 
     std::cout << "HELLO second" << std::endl;
     // Send the request to the service
