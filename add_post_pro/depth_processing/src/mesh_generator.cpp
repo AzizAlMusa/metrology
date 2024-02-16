@@ -10,7 +10,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 
 
-std::string output_mesh_filename = "/home/cerlab/Desktop/aman/Files/output_mesh.ply";
+std::string output_mesh_filename = "/home/cerlab/Desktop/output_mesh.ply";
 
 void pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& input_cloud)
 {
